@@ -1,3 +1,3 @@
 import path from 'path'
 
-console.log('listing-service is working!')
+console.log('users-service is working!')

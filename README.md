@@ -224,6 +224,8 @@ module.exports.up = (queryInterface, DataTypes) => {
     }
   )
 }
+
+module.exports.down = queryInterface => queryInterface.dropTable('listings');
 ```
 - now that we have the migration setup, we need somehow have it executed on the db. The way to do that is by adding a script to the `package.json` file.
 - add the following lines to the `script` section in the `package.json` file:
@@ -237,7 +239,7 @@ the first will run all the migrations that were not done, and the second will un
   - identify the one that is related to the `listing-service` and copy its `CONTAINER ID`.
   - at the command prompt type `docker exec -it xxxx bash`. 'xxxx' is the first 4 characters of the container ID. This will start the terminal bash inside the container.
   - then in the container, we can see the mounted volume from the hosting computer 'listing-service'. Then run `yarn db:migrate` to execute the migrations:
-  ```sh
+```sh
 Loaded configuration file "sequelize/config.js".
 Using environment "development".
 == 201912301049-create-listings: migrating =======
@@ -245,6 +247,111 @@ Using environment "development".
 ```
 - now we can check the MySQL Manager to view the changes in the db.
 
-
 ### Step 7
+- the idea for this setup of services that we are doing, is to allow to control each of the services as an independent service. This will allow us to expand the resources for each of the services independently if needed based on the number of users, queries or any other stress that these services will go under.
+
+- As we have  `users-service` to setup, then copy the `.sequelizerc` from `src` folder in the `listing-service` to the same folder in the `users-service\src` folder. The setup for `sequelize` is the same for both services.
+- copy the `sequelize` folder from the `listing-service` to the `users-service`. We will need to make changes as follows:
+  - add the same modules as we added earlier:
+    ```sh
+    yarn add mysql2 sequelize sequelize-cli
+    ```
+  - add the scripts that we added to the `package.json` file to take care of the migrations, to the `users-service` `package.json` file:
+    ```sh
+    "db:migrate":"sequelize db:migrate",
+    "db:migrate:undo":"sequelize db:migrate:undo",
+    ```
+  - remove the `listing` migrations files from the `migrations` folder, and create a new one of the `users` table migrations. The file name should inlucde the current date, time and name of the table that we are migrating to the db. Add the following to the file:
+      ```sh
+      module.exports.up = (queryInterface, DataTypes) => {
+      return queryInterface.createTable(
+        'users',
+        {
+          id: {
+            allowNull: false,
+            primaryKey: true,
+            type: DataTypes.UUID
+          },
+          email: {
+            allowNull: false,
+            type: DataTypes.STRING,
+            unique: true
+          },
+          passwordHash: {
+            allowNull: false,
+            type: DataTypes.CHAR(64)
+          },
+          createdAt: {
+            allowNull: false,
+            type: DataTypes.DATE
+          },
+          updatedAt: {
+            allowNull: false,
+            type: DataTypes.DATE
+          },
+          deletedAt: {
+            allowNull: true,
+            type: DataTypes.DATE
+          }
+        },
+        {
+          charset: 'utf8'
+        }
+      )
+    }
+    module.exports.down = queryInterface => queryInterface.dropTable('users');
+    ```
+    We are using UUID as data type for the `id` field, instead of `autoincrement`. This will "hide" the number of users in the db. The UUID is a 'random' number that can be used an ID but does not discloses any additional information over the record it represens.
+
+    - now create a new migration file that will create the `userSessions` table and add the following:
+    ```sh
+      module.exports.up = (queryInterface, DataTypes) => {
+      return queryInterface.createTable(
+        'userSessions',
+        {
+          id: {
+            allowNull: false,
+            primaryKey: true,
+            type: DataTypes.UUID
+          },
+          userId: {
+            allowNull: false,
+            reference: {
+              key: 'id',
+              model: 'users'
+            },
+            type: DataTypes.UUID
+          },
+          expiresAt: {
+            allowNull: false,
+            type: DataTypes.DATE
+          },
+
+          createdAt: {
+            allowNull: false,
+            type: DataTypes.DATE
+          }
+        },
+        {
+          charset: 'utf8'
+        }
+      )};
+
+      module.exports.down = queryInterface => queryInterface.dropTable('usersSessions'); 
+    ```
+    - next we need to migrate the changes to the `users-service`.
+    - open a new `terminal` window, find the `users-service` running container in using the `docker ps` command and then run `docker exec -it xxxx bash`, where xxxx is the first four characters of the container.
+    - when in the container, run `yarn db:migrate` at the command, to execute the migrations for the `users-service`. The following results should appear on the terminal:
+    ```sh
+      Loaded configuration file "sequelize/config.js".
+      Using environment "development".
+      == 201912301449-create-users: migrating =======
+      == 201912301449-create-users: migrated (0.051s)
+
+      == 201912301501-create-userSessions: migrating =======
+      == 201912301501-create-userSessions: migrated (0.020s) 
+    ```
+    - check the tables that were created using the MySQL Manager app.
+
+
 
