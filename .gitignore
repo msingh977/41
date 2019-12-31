@@ -6,6 +6,8 @@
 /listing-service/node_modules
 ./users-service/node_modules
 /users-service/node_modules
+/api-gateway/node_modules
+./api-gateway/node_modules
 /.pnp
 .pnp.js
 

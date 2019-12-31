@@ -353,5 +353,213 @@ Using environment "development".
     ```
     - check the tables that were created using the MySQL Manager app.
 
+### Step 8
+- next we will add the necessary to serve the api from the db.
+- in the `users-service` folder run the following:
+```yarn add express cors body-parser```
+  this will add additional modules to the project.
+- open the  `index.js` file in the `users-service\src\` folder, remove the content (that shows that the service is working), and replace it with:
+```
+import "@babel/polyfill";
 
+import "#root/db/connection";
+import "#root/server/startServer";
+```
+and add the files that were referenced in the script: `db\connections.js` and `server\startServer.js`  
+- in the `connection.js` file add the following:
+```sh
+import { Sequelize } from 'sequelize'
 
+import accessEnv from '#root/helpers/accessEnv'
+
+const DB_URI = accessEnv('DB_URI')
+
+const sequelize = new Sequelize(DB_URI, {
+  dialectOptions: {
+    charset: 'utf8',
+    nultipleStatements: true
+  },
+  logging: false
+})
+
+export default sequelize
+```
+this will set the connection to the db based on the env variable `DB_URI`. In order to read the environemnt variable we will setup a "helper" file that will read the variables and will cache them for future use (as long as the application and the server is running). As reading these env variables has a toll on the performacne of the application, we will cache those that we are reading, for future use in the application.
+
+- set a new file `accessEnv.js` in the `helpers` folder, and add the following to it:
+```sh
+  // Access variables inside process.env, throwing an error if it's not found.
+  // always run this methos in adnace (i.e. upon initialization) so that the error is
+  // thrown as early as possible.
+  // caching the values improces performace - access process.env many times is bad and
+  // have a taxi on the performace of the application
+
+  const cache = {}
+
+  const accessEnv = (key, defaultValue) => {
+    if (!(key in process.env)) {
+      if (defaultValue) return defaultValue
+      throw new Error(`$(key) not found in process.env`)
+    }
+
+    if (cache[key]) return cache[key]
+
+    cache[key] = process.env[key]
+
+    return process.env[key]
+  }
+
+  export default accessEnv
+```
+
+- next, we setup the server and we will start it using express. Opent he file `startServer.js` in the `server` folder, and add the following:
+```sh
+import bodyParser from 'body-parser'
+import cors from 'cors'
+import express from 'express'
+
+import accessEnv from '#root/helper/accessEnv'
+
+const PORT = accessEnv("PORT", 7100)
+
+const app = express()
+
+app.use(bodyParser.json())
+
+app.use(
+  cors({
+    origin: (origin, cb) => cb(null, true),
+    credentials: true
+  })
+)
+
+app.listen(PORT, "0.0.0.0", () => {
+  console.info(`Listing Service listening on ${PORT}`)
+})
+```
+this is the setup of `listing-service` server. It will read the `PORT` env variable, and will default it to 7100 if it will not exists. Then it will add the `body-parser` and `cors` middleware, to allow reading the params from the requests (body-parser) and restricrt 'cross origin access' (cors). Once the server will start it will send a notification to the console with indication to the `PORT` it is listening on:
+``` listing-service_1     | Listing Service listening on 7100 ```
+
+- now that we have the port of the service, we can "expose" on the `docker-compose.yml` file by adding the secrion `ports:` to the `listing-service` section:
+```sh
+envrionment:
+ ...
+ports:
+  - 7100:7100
+```
+
+- we then set the `users-service` to listen to port 7101:
+  - copy the folders `db`, `helpers` and `server` from the `listing-service\src` folder to the `users-service\src` folder and make the following chagnes.
+  - in the `startServer.js` change the default port from 7100 to 7101:
+  ```sh
+    const PORT = accessEnv('PORT', 7101)
+  ```
+  - and, change the notification to the console to be:
+  ```sh
+    app.listen(PORT, '0.0.0.0', () => {
+      console.info(`Users Service listening on ${PORT}`)
+    })
+  ```
+  - copy the `index.js` from the `listing-service\src` folder to `users-service\src` folder. Once that is done, the service will restart and the console should have the following notification:
+  ```sh
+    users-service_1       | Users Service listening on 7101
+  ```
+
+- open a browser and go to `http://localhost:7100`. This is the entry point to the `listing-service` server. The result should be: **`Cannot GET /`**.
+  as we have not yet defined any routes, not even to the default one, the results from the server is that there is no access.
+- the same is for `http://localhost:7101`.
+
+### Step 9
+now that we have setup the two server, let's add some routes.
+
+- create a new file `routes.js` in the `listing-service\server` folder. This will have the definitions of the server routes. Add the following to the file:
+```sh
+const setupRoutes = app => {
+  \\
+}
+
+export default setupRoutes;
+```
+
+- in the `startServer.js` file, we need to import the routes definiton and the apply it to the express application:
+```
+...
+import accessEnv...
+
+import setupRoutes from './routes'
+...
+app.use(cors 
+  ...
+)
+
+setupRoutes(app);
+...
+```
+
+- now let's add the routes definitions. As a start add the following to the `listing-service\src
+server\routes.js` file:
+```sh
+const setupRoutes = app => {
+  app.get('/listings', (req,res,next) =>{
+    return res.json({message:"here are the listings"})
+  })
+}
+
+export default setupRoutes;
+```
+- wait for the server to restart, and point the browser to `http://localhost:7100/listing`. The response should be a JSON message: `{message:'here are the listings'}`.
+
+- now, let's add some data from the db itself. In order to do so, we need to define the model of the record that we will fetch from the db. This is done by the `model` definition form the `Sequelize` module.
+- in the `db` folder create a new file `models.js` and add the following:
+```sh
+import { DataTypes, Model } from 'sequelize'
+
+import sequelize from './connections'
+
+export class Listing extends Model{}
+Listing.init(
+    {
+        title:{
+            allowNull: false,
+            type: DataTypes.STRING
+        },
+        description: {
+            allowNull: false,
+            type: DataTypes.TEXT
+        }
+    },
+    {
+        modelName: "listings",
+        sequelize
+    }
+)
+```
+the model definitoin also binds the model to the db connection:
+``` 
+    modelName:"listings",
+    sequelize
+```
+
+- now, add the new model definition to the `routes` file by adding:
+```
+  import { Listing } from '#root/db/models'`
+```
+and then change the definition of the `/listings` route to:
+```
+  app.get('/listings', async (req, res, next) => {
+    const listings = await Listing.findAll()
+    return res.json(listings)
+  })
+```
+this will fetch all the records form the `listings` table and will return them in a JSON format to the user. As we have not records in the db, the returen result is an empty array, and on the browser it should appear as `[]`.
+
+- using the MySQL manager, add a record to the `listings` table in the `listings-service-db`, and then refresh the browser to get the results from the db.
+
+### Step 10
+The listing and the users db are not supposed to be accessed directly, we need to build the API Gateway that will have access to these backend dbs.
+
+- in the `api-gateway` folder initiate a new project by running `yarn init -y`. This will create a new `package.json` file.
+- add some dependencies:
+  - babel-watch for the development: `yarn add -D babel-watch`
+  - and some other ones: `yarn add @babel/core @babel/polyfill @babel/preset-env`
+- we will be using graphQL as our main engine for the API, and we will use Apollo as our solution for that. Add the following depedencies as well: `yarn add apollo-server apollo-server-express babel-plugin-resolver cookie-parser cors express`
