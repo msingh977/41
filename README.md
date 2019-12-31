@@ -560,6 +560,15 @@ The listing and the users db are not supposed to be accessed directly, we need t
 
 - in the `api-gateway` folder initiate a new project by running `yarn init -y`. This will create a new `package.json` file.
 - add some dependencies:
-  - babel-watch for the development: `yarn add -D babel-watch`
-  - and some other ones: `yarn add @babel/core @babel/polyfill @babel/preset-env`
-- we will be using graphQL as our main engine for the API, and we will use Apollo as our solution for that. Add the following depedencies as well: `yarn add apollo-server apollo-server-express babel-plugin-resolver cookie-parser cors express`
+  - babel-watch for the development: 
+  ```sh
+    yarn add -D babel-watch
+  ```
+  - and some other ones:
+  ```sh
+    yarn add @babel/core @babel/polyfill @babel/preset-env
+  ```  
+- we will be using graphQL as our main engine for the API, and we will use Apollo as our solution for that. Add the following depedencies as well:
+```sh
+yarn add apollo-server apollo-server-express babel-plugin-resolver cookie-parser cors express
+```
