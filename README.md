@@ -743,5 +743,48 @@ then press the `PLAY` button in the middle of the screen. The following is the r
   }
 }
 ```
-we now have the api-gateway working with graphql.
+we now have the api-gateway working with graphql. The results are the mock data that we have setup to return. Now we need to setup the results to pull the information from db.
 
+### Step 12
+- we not connect the `listings` resolver to the db to pull the data from there. We create an adapater that will be acting as a connector between the db and the resolver.
+- add `got` to the `api-gatway` by running `yarn add got` at the terminal windows opened in the `api-gateway` folder.
+- create a new file `src/adapaters/listingService.js` and add the following:
+```javascript
+import got from 'got'
+
+const LISTINGS_SERVICE_URI = 'http://listing-service:7100'
+
+export default class ListingService {
+  static async fetchAllListings () {
+    const body = await got.get(`${LISTINGS_SERVICE_URI}/listings`).json()
+    return body
+  }
+}
+```
+As we are using Docker we do not need to specify the IP address of the listing-service, but rather can use the service name and it will be resolved as needed.
+</br>
+We define the `fetchAllListings()` resolver that will fetch all the results from the `listing-service\listings` route, as we have defined it earlier. The results will be retruned back to the client in JSON format.
+- replace the content of the filw `src\graphql\resolvers\Query\listings.js` with the following:
+```javascript
+import ListingsService from '#root/adapters/ListingsService'
+
+const listingsResolver = async () => {
+  return await ListingsService.fetchAllListings()
+}
+
+export default listingsResolver
+```
+- Now try to refresh the query on the graphQL playground. This should fetch all the records from the `listings` table in the `listing-db`:
+```JSON
+{
+  "data": {
+    "listings": [
+      {
+        "id": "1",
+        "title": "test",
+        "description": "test description"
+      }
+    ]
+  }
+}
+```
