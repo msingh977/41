@@ -21,7 +21,7 @@ npm install @babel\core @babel\polyfill @babel\preset-env babel-plugin-module-re
 
 - Add 'babel.config.js' file to the folder to specify the relevant presets and targets:
 
-```sh
+```javascript
 module.exports = {
   plugins: [['module-resolver', { alias: { '#root': './src' } }]],
   presets: [['@babel/preset-env', { targets: { node: 'current' } }]]
@@ -29,14 +29,14 @@ module.exports = {
 ```
 
 - add a new `script` section to the `package.json` file:
-```
+```json
 "scripts": {
     "watch": "babel-watch -L src/index.js"
   },
 ```
 
 - create a new file `src\index.js` and add:
-``` 
+```javascript 
 import path from 'path'
 console.log('listing-service is working')
 ```
@@ -89,7 +89,7 @@ As the `Users` service has the same basis as the `listing` service, let's copy t
 As we would like to control the option of running the services and have them connected and have the ability to transfer data between them, we will use `docker-compose` file that will allow us to do so.
 
 - in the `root` folder of the project, create a new file `docker-compose.yml` and add the following content:
-```sh
+```yml
 version: "3"
 services:
   listing-service:
@@ -129,7 +129,7 @@ As currently the db are not accessible to the outside world, let's add ability t
 This is done for testing purposes, as eventually these db will need to be accessed by the API applications only should not have external acccess.
 
 - open the `docker-compose.yml` file and add the following to the `listing-service` section:
-```sh
+```yml
 listing-service:
 ....
   image:mysql:5.7.20
@@ -137,7 +137,7 @@ listing-service:
   - 0.0.0.0:7200:3306
 ```
 , then add the same to the `users-service` section, but with `7201` as the port:
-```sh
+```yml
    ports:
   - 0.0.0.0:7201:3306
 ```  
@@ -157,7 +157,7 @@ yarn add mysql2 sequelize sequelize-cli
 
 - next we wll create the sequelize configuration file, by creating a new file `.sequelizerc` in the `listing-service` folder.
 - add the following in the file:
-```sh
+```javascript
 const path = require("path");
 
 module.exports = {
@@ -168,7 +168,7 @@ module.exports = {
 - now we can add the two files that we have specified in hte `rc` file:
 `sequelize\config.js` and `sequelize\migrations.js`.
 - add the follwing to the `config.js` file:
-```sh
+```javascript
 module.exports.development = {
     dialect: "mysql",
     seederStorage: "sequelize",
@@ -177,7 +177,7 @@ module.exports.development = {
 ```
   as we are specifying the DB_URI env variable, we need to add it to the `docker-compose.yml` file, so it can be used.
 - in the `listing-service` section, below the `depends_on` add:
-```sh
+```yml
   environment: 
    - DB_URL=mysql://root:password@listing-servcie-db/db?charset=UTF8
 ```
@@ -187,7 +187,7 @@ module.exports.development = {
  - add a new folder `migrations` in the `sequelize` folder. This will hold all the migrations, changes to the db structure, that we would like to make during the project build-up.
  - create a new file in the `migrations` folder. As we would like to keep track over the changes that we are making to the db, name the file with the date, time and the table that you are making the changes to. Add a file `201912301049-create-listings.js`.
 - add the folllwing to the file to create the `listings` table in the db:
-```sh
+```javascript
 module.exports.up = (queryInterface, DataTypes) => {
   return queryInterface.createTable(
     'listings',
@@ -262,7 +262,7 @@ Using environment "development".
     "db:migrate:undo":"sequelize db:migrate:undo",
     ```
   - remove the `listing` migrations files from the `migrations` folder, and create a new one of the `users` table migrations. The file name should inlucde the current date, time and name of the table that we are migrating to the db. Add the following to the file:
-      ```sh
+      ```javascript
       module.exports.up = (queryInterface, DataTypes) => {
       return queryInterface.createTable(
         'users',
@@ -298,13 +298,14 @@ Using environment "development".
           charset: 'utf8'
         }
       )
-    }
-    module.exports.down = queryInterface => queryInterface.dropTable('users');
+     }
+     module.exports.down = queryInterface => queryInterface.dropTable('users');
     ```
+
     We are using UUID as data type for the `id` field, instead of `autoincrement`. This will "hide" the number of users in the db. The UUID is a 'random' number that can be used an ID but does not discloses any additional information over the record it represens.
 
     - now create a new migration file that will create the `userSessions` table and add the following:
-    ```sh
+    ```javascript
       module.exports.up = (queryInterface, DataTypes) => {
       return queryInterface.createTable(
         'userSessions',
@@ -359,7 +360,7 @@ Using environment "development".
 ```yarn add express cors body-parser```
   this will add additional modules to the project.
 - open the  `index.js` file in the `users-service\src\` folder, remove the content (that shows that the service is working), and replace it with:
-```
+```javascript
 import "@babel/polyfill";
 
 import "#root/db/connection";
@@ -367,7 +368,7 @@ import "#root/server/startServer";
 ```
 and add the files that were referenced in the script: `db\connections.js` and `server\startServer.js`  
 - in the `connection.js` file add the following:
-```sh
+```javascript
 import { Sequelize } from 'sequelize'
 
 import accessEnv from '#root/helpers/accessEnv'
@@ -387,7 +388,7 @@ export default sequelize
 this will set the connection to the db based on the env variable `DB_URI`. In order to read the environemnt variable we will setup a "helper" file that will read the variables and will cache them for future use (as long as the application and the server is running). As reading these env variables has a toll on the performacne of the application, we will cache those that we are reading, for future use in the application.
 
 - set a new file `accessEnv.js` in the `helpers` folder, and add the following to it:
-```sh
+```javascript
   // Access variables inside process.env, throwing an error if it's not found.
   // always run this methos in adnace (i.e. upon initialization) so that the error is
   // thrown as early as possible.
@@ -413,7 +414,7 @@ this will set the connection to the db based on the env variable `DB_URI`. In or
 ```
 
 - next, we setup the server and we will start it using express. Opent he file `startServer.js` in the `server` folder, and add the following:
-```sh
+```javascript
 import bodyParser from 'body-parser'
 import cors from 'cors'
 import express from 'express'
@@ -441,7 +442,7 @@ this is the setup of `listing-service` server. It will read the `PORT` env varia
 ``` listing-service_1     | Listing Service listening on 7100 ```
 
 - now that we have the port of the service, we can "expose" on the `docker-compose.yml` file by adding the secrion `ports:` to the `listing-service` section:
-```sh
+```yml
 envrionment:
  ...
 ports:
@@ -451,11 +452,11 @@ ports:
 - we then set the `users-service` to listen to port 7101:
   - copy the folders `db`, `helpers` and `server` from the `listing-service\src` folder to the `users-service\src` folder and make the following chagnes.
   - in the `startServer.js` change the default port from 7100 to 7101:
-  ```sh
+  ```javascript
     const PORT = accessEnv('PORT', 7101)
   ```
   - and, change the notification to the console to be:
-  ```sh
+  ```javascript
     app.listen(PORT, '0.0.0.0', () => {
       console.info(`Users Service listening on ${PORT}`)
     })
@@ -473,7 +474,7 @@ ports:
 now that we have setup the two server, let's add some routes.
 
 - create a new file `routes.js` in the `listing-service\server` folder. This will have the definitions of the server routes. Add the following to the file:
-```sh
+```javascript
 const setupRoutes = app => {
   \\
 }
@@ -482,7 +483,7 @@ export default setupRoutes;
 ```
 
 - in the `startServer.js` file, we need to import the routes definiton and the apply it to the express application:
-```
+```javascript
 ...
 import accessEnv...
 
@@ -498,7 +499,7 @@ setupRoutes(app);
 
 - now let's add the routes definitions. As a start add the following to the `listing-service\src
 server\routes.js` file:
-```sh
+```javascript
 const setupRoutes = app => {
   app.get('/listings', (req,res,next) =>{
     return res.json({message:"here are the listings"})
@@ -511,7 +512,7 @@ export default setupRoutes;
 
 - now, let's add some data from the db itself. In order to do so, we need to define the model of the record that we will fetch from the db. This is done by the `model` definition form the `Sequelize` module.
 - in the `db` folder create a new file `models.js` and add the following:
-```sh
+```javascript
 import { DataTypes, Model } from 'sequelize'
 
 import sequelize from './connections'
@@ -535,17 +536,17 @@ Listing.init(
 )
 ```
 the model definitoin also binds the model to the db connection:
-``` 
+```javascript
     modelName:"listings",
     sequelize
 ```
 
 - now, add the new model definition to the `routes` file by adding:
-```
+```javascript
   import { Listing } from '#root/db/models'`
 ```
 and then change the definition of the `/listings` route to:
-```
+```javascript
   app.get('/listings', async (req, res, next) => {
     const listings = await Listing.findAll()
     return res.json(listings)
@@ -572,3 +573,175 @@ The listing and the users db are not supposed to be accessed directly, we need t
 ```sh
 yarn add apollo-server apollo-server-express babel-plugin-resolver cookie-parser cors express
 ```
+- copy the file `babel.config.js` from the `listing-service` folder to `api-gateway` folder. It should have the same configuration.
+- copy the `Dockerfile` from the `listing-service` folder to to `api-gateway` folder. We are basing the gateway on the same `node` engine.
+- in the `package.json` file add:
+```json
+  "scripts": {
+    "watch": "babel-watch -L src/index.js"
+  },
+```
+to watch for the changes in the project and re-start the server as needed.
+
+- create a new `index.js` file in the `root` of the `api-gateway` folder and add the following:
+```javascript
+console.log('API Gateway is working')
+```
+
+- in the main `docker-compose.yml` file we need to add a section to start the new service. Add a new section with the following content:
+```yml
+  api-gateway:
+    build: "./api-gateway"
+    depends_on:
+      - listing-service
+      - users-service
+    ports:
+      - 7000:7000
+    volumes:
+      - ./api-gateway:/opt/app
+```
+the `api-gatway` depends on the `listing-service` and `users-gateway`, and not on the db. We also changed the port that willl be used for the gateway.    
+
+- in the `terminal` window that have the `docker-compose up` running, click `CTRL+C` to stop the services, and then run `docker-compose up` again in order build the new service and start the other ones. The `terminal` window should show at some point:
+```sh
+api-gateway_1         | yarn run v1.21.1
+api-gateway_1         | $ babel-watch -L src/index.js
+api-gateway_1         | API Gateway is working
+```
+
+### Step 11
+Now we can start building the `api-gateway` service.
+- change the context of `index.js` file to:
+```javascript
+import "@babel/polyfill"
+
+import "#root/server/startServer"
+```
+as we don't have a database for this service, we do not need to include any connection to it.
+- create a new folder `server`, and a new file `startServer.js`. Add the following to the file:
+```javascript
+import { ApolloServer } from 'apollo--server-express'
+import cookieParser from 'cookie-parser'
+import cors from 'cors'
+import express from 'express'
+
+import accessEnv rom '#root/helpers/accessEnv'
+
+const PORT = accessEnv("PORT",7000);
+```
+copy the folder `helpers` from the `listing-service` folder to the `api-gateway` folder. We are using the same helpers and the same `accessEnv` file from the other services. We are keeping a "local" copy of the folder and file, as this will allow us to separate the services to different locations as we need to.
+We alos defaulting the port of the `api-gateway` to 7000, if the PORT is not defined in the project environment variables.
+
+- As we are using graphQL as the engine to query the db, we need to add some definitions that are related to it.
+  In the `src` folder create a new one `graphql` and a new file `typeDefs.js` in it. This will hold the type definitions:
+  ```javascript
+  import { gql } from 'apollo-server'
+
+  const typeDefs = gql`
+    type Listing {
+      description: String!
+      id: ID!
+      title: String!
+    }
+
+    type Query {
+      listings: [Listing!]!
+    }
+  `
+    export default typeDefs
+  ```
+  The type definitions are the defintions that the graphQL engine will allow:
+  -  `type Listing` defines the fields and their formats that can be queried from the `Listing` table.
+  -  `type Query` defines the query results that are allowed. In this case it is non-null array of non-null Listing.
+
+- Now we need to define the resolvers for the queries. In the `graphql` folder create a new folder `resolvers` and in it a file `index.js`. Add the folllowing to it:
+```javascript
+import * as Query from './Query'
+
+const resolvers = { Query }
+
+export default resolvers
+```
+- creeste a new file `Query/index.js` in the `graphql` folder:
+```javascript
+export { default as listings } from "./listings";
+```
+- in the `Query` folder, create a new file 'listings.js'. This will hold the resolvers for the listings queries. For now let's return mock data to test the settings:
+```javascript
+const listingsResolver = async () => {
+  return [
+    {
+      id:1,
+      description: "test",
+      title: "test title",
+    }
+  ]
+}
+
+export default listingsResolver
+```
+- now that we have defined the typeDefs and the resolvers, let finish setting the server and start the graphQL service.
+- in the `startServer.js` file add the following:
+```javascript
+...
+import express from 'express'
+
+import resolvers from '#root/graphql/resolvers'
+import typeDefs from '#root/graphql/typeDefs'
+...
+const PORT....
+cosnt apolloServer = new ApolloServer({
+  resolvers,
+  typeDefs
+})
+
+const app = express()
+app.use(cookieParser())
+app.use(
+  cors({
+    origin: (origin, cb) => cb(null,true),
+    credentials: true
+  })
+)
+apolloServer.applyMiddleware({ app, cors: false, path:"/graphql" })
+app.listen(PORT, "0.0.0.0", () => {
+  console.info(`API gateway listening on port ${PORT}`)
+})
+```
+once you save the `startServer.js` file, the service should restart, and if all goes well you should get the following in the `terminal`:
+```sh
+api-gateway_1         | >>> RESTARTING <<<
+api-gateway_1         | API gateway listening on port 7000
+```
+
+- now let's check if the service is running correctly. Open `http://localhost:7000` in a new browser window, and this should return the following:
+```sh
+Cannot GET /
+```
+as we have not defined the route '/'. Change the url on the browser to `http://localhost:7000/graphql`. This should open the graphQL playground interface on the screen. This will alllow us to run queries in graphQL against the API.
+- on the left side of the graphQL playgound enter the following:
+```graphql
+query{
+  listings{
+    id
+    title
+    description
+  }
+}
+```
+then press the `PLAY` button in the middle of the screen. The following is the result from the API that will be displayed on the right side of the graphQL playground:
+```JSON
+{
+  "data": {
+    "listings": [
+      {
+        "id": "1",
+        "title": "test title",
+        "description": "test"
+      }
+    ]
+  }
+}
+```
+we now have the api-gateway working with graphql.
+
