@@ -8,9 +8,6 @@
 /users-service/node_modules
 /api-gateway/node_modules
 ./api-gateway/node_modules
-./classified-service/node_modules
-/classified-service/node_modules
-
 /.pnp
 .pnp.js
 
