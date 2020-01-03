@@ -788,3 +788,264 @@ export default listingsResolver
   }
 }
 ```
+
+### Step 13
+Now we will add resolved to the `users-service`.
+- add a new file `routes.js` in the `users-service\src\server` folder, and add the following:
+```javascript
+const setupRoutes = app => {
+  ///
+}
+
+export default setupRoutes
+```
+now import the `routes` in the `startServer.js` file as follows:
+```javascript
+...
+import accessEnv from '#roor/helpers/accessEnv'
+
+import setupRoutes from './routes'
+...
+setupRoutes(app);
+
+app.listen(PORT, ......
+```
+- the first route we will create will be to create a new user. In the `db` folder add a new file `models.js` and add:
+```javascript
+import { DataTypes, Model } from 'sequelize'
+
+import sequelize from './connections'
+
+export class User extends Model {}
+User.init(
+  {
+    id: {
+      allowNull: false,
+      primaryKey: true,
+      type: DataTypes.UUID
+    },
+    email: {
+      allowNull: false,
+      type: DataTypes.STRING,
+      unique: true
+    },
+    passwordHash: {
+      allowNull: false,
+      type: DataTypes.CHAR(64)
+    }
+  },
+  {
+    defaultScope: {
+      rawAttribues: { excude: ['passwordHash'] }
+    },
+    modelName: 'users',
+    sequelize
+  }
+)
+
+export class UserSession extends Model {}
+UserSession.init(
+  {
+    id: {
+      allowNull: false,
+      primaryKey: true,
+      type: DataTypes.UUID
+    },
+    userId: {
+      allowNull: false,
+      references: {
+        key: 'id',
+        model: 'users'
+      },
+      type: DataTypes.UUID
+    },
+    expiresAt: {
+      allowNull: false,
+      type: DataTypes.DATE
+    }
+  },
+  {
+    modelName: 'userSessions',
+    paranoid: false,
+    sequelize,
+    updatedAt: false
+  }
+)
+```
+  - first we setup the `users` model. Basically this defines the fields that can be fetched by the API from the table in the db. As we do not want the users to extract password related infomration, as they need to be secured, we have included `rawAttribues: { excude: ['passwordHash'] }` in the `dataScope`.
+  - we also defined the `userSessions` model, that is also based on the related table in the db. As we have not define `deletedAt` field in the db table, and in order to prevent a quesion of "permanently delete", we include `paranoid: false` in the model binding section. This will suppress these questions.
+- next we need to add these models to the `routes.js` created in the `server` folder. In the `routes.js` file let's add:
+```javascript
+import { User } from '#root/db/models'
+
+const setupRoutes = app => {
+  app.post("/users", async (req, res, next) => {
+    if (!req.body.email || !req.body.password) {
+      return next(new Error("Invalid body"))
+    }
+
+    try {
+      const newUser = await User.create({
+        email: req.body.eamil,
+        id: generateUUID(),
+        passwordHash: hashPassword(req.body.password)
+      })
+    }
+  })
+}
+```
+  - we specified two functions `generateUUID()` and `hashPassword()`. We need to define them as such:
+  - in the `helpers` folder create a new file `generateUUID.js`.
+  - in the `terminal` window, go to the `users-service` folder and run `yarn add uuid`. This will add the relevant module to support UUID.
+  - the in the `generateUUID.js` file add the followins:
+  ```javascript
+    import uuidv4 from 'uuid/v4'
+    const generateUUID = () => uuidv4();
+
+    export default generateUUID
+  ```
+  this will generate the UUID and export it as a result.
+  - now, create `hashPassword.js` in the `helpers` folder.
+  - in the `terminal` window run `yard add bcryptjs`. This will add the `bcryptjs` dunctunality to allow hashing and comparing hashed passwors.
+  - now, in the `hashPassword.js` file add the following:
+  ```javascript
+  import bcrypt from 'bcryptjs'
+
+  const hashPassword = password => bcrypt.hashSync(password, bcrypt.genSaltSync(12))
+
+  export default hashPassword
+  ```
+  - now that we have these two helpers, let's add them to the `routes.js` file:
+  ```javascript
+    import generateUUID from  '#root/helpers/generateUUID'
+    import hashPasswrod from  '#root/helpers/hashPassword'
+  ```
+  and then add the return function once the user is created:
+  ```javascript
+  retrun res.json(newUser)
+  } catch (e) {
+    return next(e)
+  }
+  ```
+  - In this case of creating a new user there can be several error that may occur: no email, no password, and there can be some other errors that are coming from the db or `users-service` api. In case that it is realted to the email or password we return an error to the client with a message. In the other cases we just capture the message and pass it along to the next step. We need somehow to present it to the user.
+  - in the `startServer.js` file let's add another section that will take care of these errors. The section is the last "middleware" that will be used:
+  ```javascript
+  ...
+  setRoutes(app)
+
+  app.use((err, req, res, next) =>{
+    return res.status(500).json({
+      message: err.message
+    })
+  })
+  ```
+- in order to test the user create route, we are going to use the *Postman* application, as it handles better POST type of requests than using a browser.
+- Open the *Postman* application, change the type to POST, enter the url as the `user-service` url: `http://localhost:7101/users`. Now can start testing the route:
+  - as our route expect email and password information, let's start by trying to send none of them. The response should be:
+    ```JSON
+      {
+      "message": "Invalid body"
+      }
+    ```
+  - next, let's test sending only email information. In the *Postman* app, select the `body` tab, select `raw` and *JSON* as the type. Enter:
+    ```JSON
+      { 
+        "email":"test@example.com"
+      }
+    ```
+    send the request, and the results should also be:
+    ```JSON
+      {
+        "message": "Invalid body"
+      }
+    ```
+  - the same error should be returned, if we send `password` only information. Both fields data should be included.
+  - now, send the following body:
+    ```JSON
+      { 
+        "email":"test@example.com",
+        "password": "test"
+      }
+    ```
+    we should receive a response like:
+    ```JSON
+      {
+        "id": "0e839bd8-e055-42ca-97dc-61a4249454d1",
+        "email": "test@example.com",
+        "passwordHash": "$2a$12$pofwL93E//Mqn62NjgEvbueEkBE2Y5CubKGVvtwW5GIsZ3foZYD4O",
+        "createdAt": "2020-01-03T01:46:45.000Z",
+        "updatedAt": "2020-01-03T01:46:45.000Z"
+      }
+    ```
+    it is OK to send back the hashed password here, as the user does not have any access to this route. He will have access to the results from the `api-gateway`, and there it will not be published.
+  - let's add the ability to create a new user in the `api-gateway`. in the `api-gateware\src\graphql\typeDefs.js` file add the following:
+  ```graphQL
+    type User {
+      email: String!
+      id: ID!
+    }
+
+    type Mutation {
+      createUser ( email: String!, password: String!) : User!
+    }
+  ```
+  that definition of graphQL types allows us to specify the fields that we allow to query on and return from the db. As we are not defining the hashed password in the *User* type, there is no way that the user will be able to retreive it from the db.
+  - now we need to add the ability for creating a user to the resolvers. Create a new file `Mutation/index.js` and add the following:
+  ```javascript
+  export { default as createUser } from './createUser'
+  ```
+  - in the `api-gateware\src\graphql\index.js` import the new Mutation file:
+  ```javascript
+  import * as Mutation from './Mutation'
+  ...
+  const resolvers = { Mutation, Query }
+  ```
+  - before creating the `createUser` resolved, we need to create the adapter for the `user-service`. To do so, create a new file `api-gateway\src\adapters\usersService.js`. In the file add the following:
+  ```javascript
+    import got from 'got'
+
+    const USERS_SERVICE_URI = 'http://listing-service:7101'
+
+    export default class UsersService {
+      static async createuser({ email, password }) {
+        const body = await got
+        .post(`${USERS_SERVICE_URI}/newuser`, {
+          json: { email, password }
+        })
+        .json()
+        return body
+      }
+    }
+  ```
+  - now that we have set the adapter to the service, let's create the createUser Mutation. Create a file `api-gateware\src\graphql\Mutation\createUser.js` and add the following:
+  ```javascript
+    import UsersService from '#root/adapters/UsersService'
+
+    const createUserResolver = async (obj, { email, password }) => {
+      return await UsersService.createUser({ email, password })
+    }
+
+    export default createUserResolver
+  ```
+  this will create a new user using the relevant route in the `users-service` api. We are using `{email, password}` parameters as an object, instread of using the parameters, as it will help in the future incase that we will need to pass additional parameters. This way we do not need to specify the correct order of the parameters.
+ - save the cahnges, and wait for the server to restart. Open the graphQL playground window, refresh it, and type in the left window:
+ ```graphQL
+    mutation{
+      createUser(email: "test5@example.com", password:"test"){
+        id
+        email
+      }
+    }
+```
+click on the `PLAY` button and the result should be a new user created with the data from the db as follows:
+```JSON
+  {
+    "data": {
+      "createUser": {
+        "id": "3007992f-3199-4413-ad9a-43ff6a396966",
+        "email": "test5@example.com"
+      }
+    }
+  }
+```
+This is the response from the `users-service` api with the data received from the db and exposed back to the user. As you can see it does not includes the hashed password, as it is not a field that is available to be retreived.
