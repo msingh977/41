@@ -978,7 +978,7 @@ const setupRoutes = app => {
       }
     ```
     it is OK to send back the hashed password here, as the user does not have any access to this route. He will have access to the results from the `api-gateway`, and there it will not be published.
-  - let's add the ability to create a new user in the `api-gateway`. in the `api-gateware\src\graphql\typeDefs.js` file add the following:
+- let's add the ability to create a new user in the `api-gateway`. in the `api-gateware\src\graphql\typeDefs.js` file add the following:
   ```graphQL
     type User {
       email: String!
@@ -990,17 +990,17 @@ const setupRoutes = app => {
     }
   ```
   that definition of graphQL types allows us to specify the fields that we allow to query on and return from the db. As we are not defining the hashed password in the *User* type, there is no way that the user will be able to retreive it from the db.
-  - now we need to add the ability for creating a user to the resolvers. Create a new file `Mutation/index.js` and add the following:
+- now we need to add the ability for creating a user to the resolvers. Create a new file `Mutation/index.js` and add the following:
   ```javascript
   export { default as createUser } from './createUser'
   ```
-  - in the `api-gateware\src\graphql\index.js` import the new Mutation file:
+- in the `api-gateware\src\graphql\index.js` import the new Mutation file:
   ```javascript
   import * as Mutation from './Mutation'
   ...
   const resolvers = { Mutation, Query }
   ```
-  - before creating the `createUser` resolved, we need to create the adapter for the `user-service`. To do so, create a new file `api-gateway\src\adapters\usersService.js`. In the file add the following:
+- before creating the `createUser` resolved, we need to create the adapter for the `user-service`. To do so, create a new file `api-gateway\src\adapters\usersService.js`. In the file add the following:
   ```javascript
     import got from 'got'
 
@@ -1017,7 +1017,7 @@ const setupRoutes = app => {
       }
     }
   ```
-  - now that we have set the adapter to the service, let's create the createUser Mutation. Create a file `api-gateware\src\graphql\Mutation\createUser.js` and add the following:
+- now that we have set the adapter to the service, let's create the createUser Mutation. Create a file `api-gateware\src\graphql\Mutation\createUser.js` and add the following:
   ```javascript
     import UsersService from '#root/adapters/UsersService'
 
@@ -1028,7 +1028,7 @@ const setupRoutes = app => {
     export default createUserResolver
   ```
   this will create a new user using the relevant route in the `users-service` api. We are using `{email, password}` parameters as an object, instread of using the parameters, as it will help in the future incase that we will need to pass additional parameters. This way we do not need to specify the correct order of the parameters.
- - save the cahnges, and wait for the server to restart. Open the graphQL playground window, refresh it, and type in the left window:
+- save the cahnges, and wait for the server to restart. Open the graphQL playground window, refresh it, and type in the left window:
  ```graphQL
     mutation{
       createUser(email: "test5@example.com", password:"test"){
@@ -1049,3 +1049,82 @@ click on the `PLAY` button and the result should be a new user created with the 
   }
 ```
 This is the response from the `users-service` api with the data received from the db and exposed back to the user. As you can see it does not includes the hashed password, as it is not a field that is available to be retreived.
+
+### Step 14
+In the last step we created a route to create a new user. If we will try to create a user with an email that already exists in the db, we will get an error as follows:
+```JSON
+{
+  "errors": [
+    {
+      "message": "Response code 500 (Internal Server Error)",
+      "locations": [
+        {
+          "line": 2,
+          "column": 3
+        }
+      ],
+      "path": [
+        "createUser"
+      ],
+      "extensions": {
+        "code": "INTERNAL_SERVER_ERROR",
+        "exception": {
+          "name": "HTTPError",
+          "stacktrace": [
+            "HTTPError: Response code 500 (Internal Server Error)",
+            "    at EventEmitter.<anonymous> (/opt/app/node_modules/got/dist/source/as-promise.js:108:31)",
+            "    at processTicksAndRejections (internal/process/task_queues.js:93:5)"
+          ]
+        }
+      }
+    }
+  ],
+  "data": null
+}
+```
+This is not a very nice fomated error. We can handle these error in a nicer way.
+- add the `lodash` module by running `yarn add lodash` in the `terminal` window in the `api-gateway` root folder.
+
+- create a new file `api-gateway\src\server\formatGraphQLError.js` and add the following:
+```javascript
+  import _ from 'lodash'
+
+  const formatGraphQLError = error => {
+    const errorDetails = _.get(error, 'originalError.response.body')
+    try {
+      if (errorDetails) return JSON.parse(errorDetails)
+    } catch (e) {}
+
+    return error
+  }
+
+  export default formatGraphQLError
+```
+As we are using `got` to fetch data from the api, when there is an error `got` returns the original error as part of the body of the response. We are extracting this error and returning it back to the user. There are some cases that there will be an error without any indcation in the response body, and in this case we will return the error back to the user. This is in the case that the error is from the GraphQL engine and not the db.
+- now add the following in the `startServer.js` file, to include the error details handling:
+```javascript
+  ...
+  import accessEnv from '#root/helpers/accessEnv'
+  import formatGraphQLError from './formatGraphQLError'
+
+  const PORT = accessEnv('PORT', 7000)
+
+  const apolloServer = new ApolloServer({
+    formatError: formatGraphQLError,
+    resolvers,
+    typeDefs
+  })
+...
+```
+- now if we will try to create a new user with an email that already exists in the db, we will get the following response (in the graphQL playground):
+```JSON
+  {
+    "errors": [
+      {
+        "message": "Validation error"
+      }
+    ],
+    "data": null
+  }
+```
+This way the error is more meanigful
