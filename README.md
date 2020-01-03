@@ -1421,6 +1421,307 @@ export { default as createUserSession } from './createUserSession'
   }
 ```
 
+### Step 17
+- now let's add a login option to the `classified-service` application. Create a new file `classified-service\src\components\Root\Login\Login.js` and add the following simle react component:
+```javascript
+import React from 'react'
 
+export default function Login() {
+  return (
+    <div>
+      <h1>Login</h1>
+    </div>  
+  )
+}
+```
+and the following to `classified-service\src\components\Root\Login\index.js`:
+```javascript
+import Login from './Login'
 
+export default Login
+```
+- in the `Root.js` file add import for the new `Login` component, and add it to the `Sidebar` component section:
+```javascript
+...
+import Login from './Login'
+...
+<Sidebar><Login /></Sidebar>
+...
+```
+- wait for the service to refreh and check the browser with the application open on: `http://localhost:7001`
+- now let's add the actual *Login* component content. in the `Login.js` file add the following:
+```javascript
+  import React from 'react'
+  import { useForm } from 'react-hook-form'
+  import styled from 'styled-components'
+
+  const Label = styled.label`
+    display: block;
+
+    :not(:first-child) {
+      margin-top: 0.75rem;
+    }
+  `
+  const LabelText = styled.strong`
+    display: block;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+  `
+
+  export default function Login () {
+    const {
+      formState: { isSubmitting },
+      handleSubmit,
+      register
+    } = useForm()
+
+    const onSubmit = handleSubmit(({ email, password }) => {
+      console.log(email, password)
+    })
+
+    return (
+      <div>
+        <from onSubmit={onSubmit}>
+          <Label>
+            <LabelText>email</LabelText>
+          </Label>
+        </from>
+      </div>
+    )
+  }
+```
+- before adding the `TextInput` component, let's take care of the `theme` of the project. This will hold all the colors that we would like to use throughout the project.
+
+- create a new file `theme.js` in the  `src` folder of the `classified-service`. Add the following:
+```javacript
+//whites
+export const White = '#FFFFFF'
+export const Snow = '#FFFAFA'
+export const Honeydew = '#F0FFF0'
+export const MintCream = '#F5FFFA'
+export const Azure = '#F0FFFF'
+export const AliceBlue = '#F0F8FF'
+export const GhostWhite = '#F8F8FF'
+export const WhiteSmoke = '#F5F5F5'
+export const Seashell = '#FFF5EE'
+export const Beige = '#F5F5DC'
+export const OldLace = '#FDF5E6'
+export const FloralWhite = '#FFFAF0'
+export const Ivory = '#FFFFF0'
+export const AntiqueWhite = '#FAEBD7'
+export const Linen = '#FAF0E6'
+export const LavenderBlush = '#FFF0F5'
+export const MistyRose = '#FFE4E1'
+
+//browns
+export const Cornsilk = '#FFF8DC'
+export const BlanchedAlmond = '#FFEBCD'
+export const Bisque = '#FFE4C4'
+export const NavajoWhite = '#FFDEAD'
+export const Wheat = '#F5DEB3'
+export const BurlyWood = '#DEB887'
+export const Tan = '#D2B48C'
+export const RosyBrown = '#BC8F8F'
+export const SandyBrown = '#F4A460'
+export const Goldenrod = '#DAA520'
+export const DarkGoldenrod = '#B8860B'
+export const Peru = '#CD853F'
+export const Chocolate = '#D2691E'
+export const SaddleBrown = '#8B4513'
+export const Sienna = '#A0522D'
+export const Brown = '#A52A2A'
+export const Maroon = '#800000'
+
+//pinks
+export const Pink = '#FFC0CB'
+export const LightPink = '#FFB6C1'
+export const HotPink = '#FF69B4'
+export const DeepPink = '#FF1493'
+export const MediumVioletRed = '#C71585'
+export const PaleVioletRed = '#DB7093'
+
+//purples
+export const Lavender = '#E6E6FA'
+export const Thistle = '#D8BFD8'
+export const Plum = '#DDA0DD'
+export const Violet = '#EE82EE'
+export const Orchid = '#DA70D6'
+export const Fuchsia = '#FF00FF'
+export const Magenta = '#FF00FF'
+export const MediumOrchid = '#BA55D3'
+export const MediumPurple = '#9370DB'
+export const BlueViolet = '#8A2BE2'
+export const DarkViolet = '#9400D3'
+export const DarkOrchid = '#9932CC'
+export const DarkMagenta = '#8B008B'
+export const Purple = '#80008'
+export const RebeccaPurple = '#663399'
+export const Indigo = '#4B0082'
+export const MediumSlateBlue = '#7B68EE'
+export const SlateBlue = '#6A5ACD'
+export const DarkSlateBlue = '#483D8B'
+
+//oranges
+export const Coral = '#FF7F50'
+export const Tomato = '#FF6347'
+export const OrangeRed = '#FF4500'
+export const DarkOrange = '#FF8C00'
+export const Orange = '#FFA500'
+
+// greens
+export const GreenYellow = '#ADFF2F'
+export const Chartreuse = '#7FFF00'
+export const LawnGreen = '#7CFC00'
+export const Lime = '#00FF00'
+export const LimeGreen = '#32CD32'
+export const PaleGreen = '#98FB98'
+export const LightGreen = '#90EE90'
+export const MediumSpringGreen = '#00FA9A'
+export const SpringGreen = '#00FF7F'
+export const MediumSeaGreen = '#3CB371'
+export const SeaGreen = '#2E8B57'
+export const ForestGreen = '#228B22'
+export const Green = '#008000'
+export const DarkGreen = '#006400'
+export const YellowGreen = '#9ACD32'
+export const OliveDrab = '#6B8E23'
+export const Olive = '#808000'
+export const DarkOliveGreen = '#556B2F'
+export const MediumAquamarine = '#66CDAA'
+export const DarkSeaGreen = '#8FBC8F'
+export const LightSeaGreen = '#20B2AA'
+export const DarkCyan = '#008B8B'
+export const Teal = '#008080'
+
+//greys
+export const Gainsboro = '#DCDCDC'
+export const VeryLightGray = '#CCCCCC'
+export const LightGrey = '#D3D3D3'
+export const Silver = '#C0C0C0'
+export const DarkGray = '#A9A9A9'
+export const Gray = '#808080'
+export const DimGrey = '#696969'
+export const LightSlateGray = '#778899'
+export const SlateGray = '#708090'
+export const DarkSlateGray = '#2F4F4F'
+export const Black = '#000000'
+//reds
+export const IndianRed = '#CD5C5C'
+export const LightCoral = '#F08080'
+export const Salmon = '#FA8072'
+export const DarkSalmon = '#E9967A'
+export const LightSalmon = '#FFA07A'
+export const Crimson = '#DC143C'
+export const Red = '#FF0000'
+export const FireBrick = '#B22222'
+export const DarkRed = '#8B0000'
+
+//blues
+export const Aqua = '#00FFFF'
+export const Cyan = '#00FFFF'
+export const LightCyan = '#E0FFFF'
+export const PaleTurquoise = '#AFEEEE'
+export const Aquamarine = '#7FFFD4'
+export const Turquoise = '#40E0D0'
+export const MediumTurquoise = '#48D1CC'
+export const DarkTurquoise = '#00CED1'
+export const CadetBlue = '#5F9EA0'
+export const SteelBlue = '#4682B4'
+export const LightSteelBlue = '#B0C4DE'
+export const PowderBlue = '#B0E0E6'
+export const LightBlue = '#ADD8E6'
+export const SkyBlue = '#87CEEB'
+export const LightSkyBlue = '#87CEFA'
+export const DeepSkyBlue = '#00BFFF'
+export const DodgerBlue = '#1E90FF'
+export const CornflowerBlue = '#6495ED'
+export const RoyalBlue = '#4169E1'
+export const Blue = '#0000FF'
+export const MediumBlue = '#0000CD'
+export const DarkBlue = '#00008B'
+export const Navy = '#000080'
+export const MidnightBlue = '#191970'
+```
+- in order to use the `theme` colors in the project, we need to specify it on the `index.js` file as such:
+```javascript
+  ...
+  import { createGlobalStyle, ThemeProvider } from 'styled-components'
+
+  import * as theme from './theme'
+  ...
+  html, body, #app {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    background: ${props => props.theme.WhiteSmoke};
+  }
+  ...
+  render (
+    <ThemeProvider theme={theme}>
+      <GlobalStyle />
+      <Root />
+    </ThemeProvider>
+  )
+```
+`ThemeProvider` will allow us to use the `theme` colors within all the components in the project, through the props.
+- we need to add a `TextInput` field. As this one is generic enough, we will add the component in a `shared` folder as: `components\shared\TextInput.js`:
+```javascript
+import styled from 'styled-components'
+
+const TextInput = styled.input`
+  border: 1px solid ${props => props.theme.VeryLightGray}
+  box-sizing: border-box;
+  display: block;
+  font-size: 0.9rem;
+  padding: 0.25rem;
+  width: 100%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) inset, 0 3px 0 #fff;
+  background: ${props => props.theme.WhiteSmoke};
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+`
+
+export default TextInput
+```
+- now we can import this component in the `Login.js` file and use it as follows:
+```javascript
+...
+import TextInput from '#root/components/shared/TextInput'
+...
+  <Label>
+    <LabelText>Email</LabelText>
+    <TextInput disabled={isSubmitting} name="email" type="email" ref={register} />
+  </Label>  
+  <Label>
+    <LabelText>Password</LabelText>
+    <TextInput disabled={isSubmitting} name="password" type="password" ref={register} />
+  </Label> 
+```
+- now let's add the *Login* button as:
+```javascript
+  const LoginButton = styled.button`
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.5rem;
+  background-color: ${props => props.theme.DodgerBlue};
+  text-align: center;
+  box-shadow: rgb(255, 255, 255) -8px -8px 20px 0px,
+    ${props => props.theme.gray} 1px 1px 14px -3px;
+  background: ${props => props.theme.WhiteSmoke};
+  // border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid ${props => props.theme.DimGrey};
+  border-radius: 6px;
+
+  :hover {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) inset, 0 3px 0 #fff;
+  }
+`
+  ...
+  </Login>
+  <LoginButton disabled={isSubmitting} type='submit'>Login</LoginButton>
+  </form>  
+```
+- after the service will refreshed, enter data in the two fields rendred on the screen, click on the 'Login' button, and then check the 'console' and the enetered data should appear there.
 

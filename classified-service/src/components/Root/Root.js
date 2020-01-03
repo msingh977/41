@@ -1,6 +1,8 @@
 import React from 'react'
 import styled from 'styled-components'
 
+import Login from './Login'
+
 const Wrapper = styled.div`
   box-sizing: border-box;
   height: 100vh;
@@ -29,7 +31,9 @@ export default function Root () {
     <Wrapper>
       <Container>
         <Content>Content</Content>
-        <Sidebar>Sidebar</Sidebar>
+        <Sidebar>
+          <Login />
+        </Sidebar>
       </Container>
     </Wrapper>
   )
