@@ -2,14 +2,17 @@
 
 # dependencies
 /node_modules
-./listing-service/node_modules
 /listing-service/node_modules
-./users-service/node_modules
 /users-service/node_modules
 /api-gateway/node_modules
-./api-gateway/node_modules
+/classified-service/node_modules
+/classified-service/.cache
+/classified-service/dist
+
 /.pnp
 .pnp.js
+/.cache
+/dist
 
 
 # testing
@@ -28,3 +31,4 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+classified-service/.cache/05/3f5dc671e94c70860aa49a9be786dd.json
