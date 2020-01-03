@@ -1128,3 +1128,148 @@ As we are using `got` to fetch data from the api, when there is an error `got` r
   }
 ```
 This way the error is more meanigful
+
+### Step 15
+Now let's add some frontend content.
+- in the `classified-service` folder run `yarn init -y`. This will start the `package.json`.
+- add the following modules:
+```sh
+yarn add -D parcel-bundler
+```
+this will add the `parcel` (in production it is preferable to use `webpack` as the bundler). This specific one will install any missing fependencies that we are going to reference.
+- create a new file `index.html` and add the following content:
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Classified App</title>
+</head>
+<body>
+    <div id="app"></div>
+    <script src="./index.js"></script>
+</body>
+</html>
+```
+- create a new file `index.js' and add the following:
+```javascript
+import React from 'react'
+import { render } from 'react-dom'
+
+render(<h1>App is working</h1>, document.getElementById('app'))
+```
+- add a new `scripts` section in the `package.json` file:
+```JSON
+"scripts": {
+  "watch": "parcel --port=7001 src/index.html"
+}
+```
+add also an `alias` section with:
+```JSON
+"alias": {
+  "#root": "./src"
+}
+```
+- in the `classifeid-service` terminal window run `yarn watch`. This will install the missing dependencies and run the app.
+- open a new brwoser window and go to `http://localhost:7001` to open the main page of the application.
+- create a new file `components\Root\Root.js` and add the following:
+```javascript
+import React from 'react'
+
+export default function Root () {
+  return (
+    <div>
+      <h1>Root</h1>
+    </div>
+  )
+}
+```
+- create a new file `components\Root\index.js` and add:
+```javascript
+import Root from './Root'
+
+export default Root
+```
+- add to `src/index.js` an import of `Root` as follows:
+```javascript
+import Root from '#root/components/Root'
+```
+- replace the `render` section in the `index.js` file to:
+```javascript
+render(<Root/>, document.getElementById('app'))
+```
+- now let's add some formating to the page, starting with the *Roboto* Google font. Open a new browser window and:
+  - go to the url: `http://fonts.google.com`
+  - search for the *Roboto* font.
+  - in the *Roboto* font card, click on the *red* (+) sign to add it to the selection.
+  - on the selected font window, click on the *customize* section, and select 400 and 700 font weights.
+  - click on the *@import@ tag, and copy the url.
+- add the following to the `index.js` file:
+```javascript
+import { createGlobalStyle } from 'styled-components'
+
+const GlobalStyle = createGlobalStyle`
+  @import url('https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap');
+
+  html, body, #app {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: "Roboto, sans-serif";
+  }
+ `
+ ``` 
+ then add the `GlobalStyle` to the `render` as follows:
+ ```javascript
+ render(
+   <>
+    <GlobalStyle />
+      <Root />
+   </>, document.getElementById("app")   
+ )
+ ```
+ - now, let's add the page structure with a content and a sidebar sections. In the `Root.js` file add the following:
+ ```javascript
+ import { styled } from 'styled-components'
+
+  const Wrapper = styled.div`
+  box-sizing: border-box;
+  height: 100vh;
+  padding: 1rem;
+  width: 100vw;
+`
+const Container = styled.div`
+  display: flex;
+  flex-flow: row nowrap;
+  margin: 0 auto;
+  width: 90vw;
+`
+
+const Content = styled.div`
+  flex: 1;
+  margin-right: 1rem;
+`
+
+const Sidebar = styled.div`
+  flex: 0 auto;
+  width: 10vw;
+`
+```
+and change the `return` to:
+```javascript
+return (
+  <Wrapper>
+    <Container>
+      <Content>Content</Content>
+      <Sidebar>Sidebar</Sidebar>
+    </Container>
+  </Wrapper>    
+)       
+  
