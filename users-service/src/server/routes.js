@@ -49,6 +49,21 @@ const setupRoutes = app => {
     }
   })
 
+  app.post('/sessions', async (req, res, next) => {
+    if ((!req.body.password, !req.body.password)) {
+      return next(new Error('Invalid body'))
+    }
+    try {
+      const oneUser = await User.findOne({
+        attributes: {},
+        where: { email: req.body.email }
+      })
+      return res.json(comparePassword(req.body.password, oneUser.passwordHash))
+    } catch (e) {
+      return next(e)
+    }
+  })
+
   app.get('/users', async (req, res, next) => {
     try {
       const allUsers = await User.findAll()

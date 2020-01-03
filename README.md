@@ -1272,4 +1272,29 @@ return (
     </Container>
   </Wrapper>    
 )       
-  
+```
+
+### Step 16
+Before we continue building the app, we need to add some additional routes for the `users-service` that will take care of a user login.
+- in the `users-service\src\server\routes.js` file add a new route:</br>
+  note: instead of calling this route 'login' we call it 'sessions' as we are actually creating a session for the user as a side effect of a login.
+```javascript
+...
+import comparePassword from "#root/helpers/comparePassword"
+...
+  app.post('/sessions', async (req, res, next) => {
+    if ((!req.body.password, !req.body.password)) {
+      return next(new Error('Invalid body'))
+    }
+    try {
+      const oneUser = await User.findOne({
+        attributes: {},
+        where: { email: req.body.email }
+      })
+      return res.json(comparePassword(req.body.password, oneUser.passwordHash))
+    } catch (e) {
+      return next(e)
+    }
+  })
+```
+this will give us the options to send `email` and `password`, get the data from the db about the user, compare te password recevied from the user and the one in the db, and return if both password match or not. Once all is working, have the errors send back when email or password are inccorect not to include the reason, but only that the login had faild. That way the user will not know if it was the provided password or the email were wrong. It will help prevent from hacking.
