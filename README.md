@@ -1017,7 +1017,7 @@ const setupRoutes = app => {
       }
     }
   ```
-- now that we have set the adapter to the service, let's create the createUser Mutation. Create a file `api-gateware\src\graphql\Mutation\createUser.js` and add the following:
+- now that we have set the adapter to the service, let's create the createUser Mutation. Create a file `api-gateware\src\graphql\Mutation\createUser.js` and add the following:</br>
   ```javascript
     import UsersService from '#root/adapters/UsersService'
 
@@ -1127,4 +1127,188 @@ As we are using `got` to fetch data from the api, when there is an error `got` r
     "data": null
   }
 ```
-This way the error is more meanigful
+This way the error is more meanigful.
+
+### Step 15
+Now let's start building some of the frontend.
+- start with openning the folder in the `terminal` and run `yarn init -y`.
+- Let's add some modules:
+```yarn add -D parcel-bundler```
+We will use `parcel` instead of `webpack` which we can use in production.
+- Create a new file `src\index.js` and add the following:
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Classified App</title>
+</head>
+<body>
+    <div id="app"></div>
+    <script src="./index.js"></script>
+</body>
+</html>
+```
+- Create a new file `src\index.js` and create a basic `React` app as follows:
+```javascript
+import React from 'react'
+import { render } from 'react-dom'
+
+render(<h1>App is Working</h1>, document.getElementById('app'))
+```
+- in the `package.json` file add the following `scripts` section:
+```JSON
+"scripts": {
+  "watch": "parcel --port=7001 src/index.html"
+}
+```
+We are strting the app in port 7001. We do not need to install `react` or `react-dom` prior of starting the app, as `parcel` will install the missing modules for us.</br>
+In a new `terminal` window pointing to the `classified-service` folder, run `yarn watch`.
+- in the `package.json` file add the `alias` section as:
+```JSON
+,
+  "alias": {
+    "#root": "./src"
+  }
+```
+this will allow us to use `#root` when we are referencing files.</br>
+stop the `watcher` in the terminal by clicking `CTRL+C` and start it again with `yarn watch`.
+- create a new file `src\Components\Root\Root.js` and add the following:
+```javascript
+import React from 'react'
+
+function Root () {
+  return (
+    <div>
+      <h1>Root</h1>
+    </div>
+  )
+}
+
+export default Root
+```
+- then create another file in the folder `index.js` and add the following:
+```javascript
+import Root from './Root'
+
+export default Root
+```
+- Now, let's place it in the app `index.js` file as follows:
+```javascript
+import React from 'react'
+import { render } from 'react-dom'
+
+import Root from '#root/components/Root'
+
+render(<Root />, document.getElementById('app'))
+```
+- let add some formatings to the page by using `styled-components`. Add the following to the `index.js` file:
+```javascript
+...
+import Root from '#root/components/Root'
+import { createGlobalStyle } from 'styled-components'
+
+const GlobalStyle = createGlobalStyle`
+  @import url()
+`
+```
+we would like to use the *Roboto* Google font. 
+ - In order to do that, open a new browser window and go to 'https://fonts.google.com'
+ - search for the *Roboto* font.
+ - hover on the *Roboto* font, and then click on the *red* (+) sign. This will select the font familiy.
+ - click on the new window that appeared on the lower right side of the page, and then click on *customize*.
+ - on the list select the following two font weights: 400, 700.
+ - click on the *@import* section and copy the customized url that was created: `@import url('https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap');`
+ - paste this in the `index.js` with in the `GlobalStyle` const:
+ ```javascript
+ const GlobalStyle = createGlobalStyle`
+  @import url('https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap');
+
+  html, body, #app {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    width: 100%
+  }
+
+  body {
+    font-familiy: Roboto, sans-serif;
+  }
+`
+```
+then wrap the `<Root/>` component with the new `GlobalStyle` component as follows:
+```javascript
+render(<GlobalStyle><Root /></GlobalStyle>, document.getElementById('app'))
+```
+- now we can add a `wrapper` in the `Root` component that will allow to style a specific component. In the `Root.js` file add the following:
+```javascript
+  import React from 'react'
+  import styled from 'styled-components'
+
+  const Wrapper = styled.div`
+      box-sizing: border-box;
+      height: 100%;
+      width:100%
+      padding: 1rem;
+  `
+
+  function Root () {
+    return <Wrapper>Root is now styled</Wrapper>
+  }
+
+  export default Root
+```
+- now, inside the `Wrapper` create a `Container` and style is such:
+```javascript
+const Container = styled.div`
+  display: flex;
+  flex-flow: row nowrap;
+  margin: 0 auto;
+  width: 80rem;
+`;
+
+...
+  return <Wrapper>
+    <Container>
+      Now the Root is in a container
+    </Container>
+  </Wrapper>
+...
+```  
+- complete the styling of the page as so:
+```javascript
+import React from 'react'
+import styled from 'styled-components'
+
+const Container = styled.div`
+  display: flex;
+  width: 90vw;
+`
+const Content = styled.div`
+  flex: 1;
+  margin-right: 1rem;
+`
+const Sidebar = styled.div`
+  flex: 0 auto;
+  width: 10vw;
+`
+const Wrapper = styled.div`
+  box-sizing: border-box;
+  height: 100vh;
+  padding: 1rem;
+  width: 100vw;
+`
+
+function Root () {
+  return (
+    <Wrapper>
+      <Container>
+        <Content>Content</Content>
+        <Sidebar>Sidebar</Sidebar>
+      </Container>
+    </Wrapper>
+  )
+}
+export default Root
+```
+This will give us the basic app format.
