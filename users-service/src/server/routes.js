@@ -2,6 +2,10 @@ import { User } from '#root/db/models'
 import hashPassword from '#root/helpers/hashPassword'
 import comparePassword from '#root/helpers/comparePassword'
 import generateUUID from '#root/helpers/generateUUID'
+import { addHours } from 'date-fns'
+import { UserSession } from '../db/models'
+
+const USER_SESSION_EXPIRY_HOURS = 1
 
 const setupRoutes = app => {
   app.post('/newuser', async (req, res, next) => {
@@ -58,7 +62,24 @@ const setupRoutes = app => {
         attributes: {},
         where: { email: req.body.email }
       })
-      return res.json(comparePassword(req.body.password, oneUser.passwordHash))
+      if (!oneUser) {
+        return next(new Error('Invalid Credentials'))
+      }
+      if (!comparePassword(req.body.password, oneUser.passwordHash)) {
+        return next(new Error('Invalid Credentials'))
+      }
+
+      const expiresAt = addHours(new Date(), USER_SESSION_EXPIRY_HOURS)
+
+      const sessionToken = generateUUID()
+
+      const userSession = await UserSession.create({
+        id: sessionToken,
+        expiresAt,
+        userId: oneUser.id
+      })
+
+      return res.json(userSession)
     } catch (e) {
       return next(e)
     }

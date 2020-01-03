@@ -1291,10 +1291,136 @@ import comparePassword from "#root/helpers/comparePassword"
         attributes: {},
         where: { email: req.body.email }
       })
-      return res.json(comparePassword(req.body.password, oneUser.passwordHash))
+      if (!oneUser) {
+        return next(new Error('Invalid Credentials'))
+      }
+      if (!comparePassword(req.body.password, oneUser.passwordHash)) {
+        return next(new Error('Invalid Credentials'))
+      }
     } catch (e) {
       return next(e)
     }
   })
 ```
 this will give us the options to send `email` and `password`, get the data from the db about the user, compare te password recevied from the user and the one in the db, and return if both password match or not. Once all is working, have the errors send back when email or password are inccorect not to include the reason, but only that the login had faild. That way the user will not know if it was the provided password or the email were wrong. It will help prevent from hacking.
+
+- We want the login session to expire within 1 hour so let's add a module that add date and time functunality:</br>
+in the `terminal` windows within the `users-service` folder run `yarn add date-fns`, then add the following to the `routes.js` file:
+
+```javascript
+...
+import { addHours} from 'date-fns'
+...
+const USER_SESSION_EXPIRY_HOURS = 1
+
+const setupRoutes...
+...
+if (!comparePassword(req.body.password, oneUser.passwordHash)) {
+        return next(new Error('Invalid Credentials'))
+}
+
+const expiresAt = addHours(new Date(), USER_SESSION_EXPIRY_HOURS)
+
+const sessionToken = generateUUID()
+
+const userSession = await UserSession.create({
+  id: sessionToken,
+  expiresAt,
+  userId: oneUser.id
+})
+  return res.json(userSession)
+...
+- now we need to implemet this route in the `api-gateway`. In the  `api-gatway\src\graphql\typeDefs.js` file add a new `Mutation` for creating the *userSession*:
+```javascript
+const typeDefs = gql`
+  scalar Date
+```
+this will add a new scalar to take care of the presentation of the dates. We can format the scalars, but in this case we will keep it in its origin format</br>
+then add also:
+```javascript
+type UserSession {
+  id: ID!
+  user: User!
+  expiresAt: Date!
+  createdAt: Date!
+}
+
+type Mutation {
+  ...
+  createUserSession(email: String!, password: String!): UserSession!
+  ...
+}
+```
+- now we need to add the resolver for `createUserSession`. In the `api-gatway\src\graphql\resolvers\Mutation` folder create a new file `createUserSession.js` and add the following:
+```javascript
+import UsersService from '#root/adapters/UsersService'
+
+const createUserSessionResolver = async (obj, { email, password }) => {
+  const userSession =  await UsersService.createUserSession({ email, password })
+
+  //
+}
+
+export default createUserSessionResolver
+```
+- as we are using `createUserSession` we need to specify it in the `adapters\userService.js` file:
+```javascript
+...
+static async createUserSession ({ email, passowrd }) {
+    const body = await got
+      .post(`${USERS_SERVICE_URI}/sessions`, {
+        json: { email, password }
+      })
+      .json()
+    return body
+  }
+...
+```
+- now that we have the `userSession` create, we need to write back some infomration into the session cookie, but graphQL does not have a direct access to the session cookie. We need to add a context to the `startServer.js` that will allow us to do so.<br>
+  in the `startServer.js` file add the following:
+  ```javascript
+  ... const apolloServer = new ApolloServer({
+    context: a=> a,
+    ...
+  })
+  ```
+  this defines the third parameter of the Apollo graphQL server, context. This will allow to access the cookie within the graphQL server.
+  In the `createUserSession.js` file we can now add the `context` as parameter to the resolver, and then use it to write back the response to the session cookie:
+  ```javascript
+  import UsersService from '#root/adapters/UsersService'
+
+  const createUserSessionResolver = async (obj, { email, password }, context) => {
+    const userSession =  await UsersService.createUserSession({ email, password })
+
+    //
+    context.res.cookie("userSessionId", userSession.id, { httpOnly: true})
+
+    return userSession
+  }
+  ```
+  the way that we are setting the cookie:
+  - the name of the cookie is "userSessionid"
+  - the value that we place in it is `userSession.id`
+  - to add more security and allowing only http requests to access it, and not other javascript scripts on the page, is by adding `{httpOnly: true}` that will do that.
+- the step is to add the new fucntion to the `Mutation\index.js` file as:
+```javascript
+export { default as createUserSession } from './createUserSession'
+```
+- open the GraphQL playground, refresh the page and try to create a new userSession as:
+```graphql
+  mutation{
+    createUserSession(email:"test1@example.com", password:"test"){
+      id
+      expiresAt
+      createdAt
+      user{
+        id
+        email
+      }
+    }
+  }
+```
+
+
+
+
