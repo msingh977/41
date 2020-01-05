@@ -38,16 +38,34 @@ const LoginButton = styled.button`
   }
 `
 
+const mutation = gql`
+  mutation($email: String!, $password: String!) {
+    createUserSession(email: $email, password: $password) {
+      id
+      user {
+        email
+        id
+      }
+    }
+  }
+`;
+
 export default function Login () {
+  const [createUserSession] = useMutation(mutation);
+
   const {
     formState: { isSubmitting },
     handleSubmit,
     register
   } = useForm()
 
-  const onSubmit = handleSubmit(({ email, password }) => {
-    console.log(email, password)
-  })
+  const onSubmit = handleSubmit(async ({ email, password }) => {
+      const result = await createUserSession({ variables: { email, password } })
+      console.log(result)
+    })
+  // const onSubmit = handleSubmit(async ({email,password})=> {
+  //   await console.log(email,password)
+  // })
 
   return (
     <div>

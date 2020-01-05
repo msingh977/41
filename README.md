@@ -1756,11 +1756,15 @@ SERVICES_URI=http://localhost:7000
 - now we add the graphQL ability to the `index.js` file:
 ```javascript
 ...
+import dotenv from 'dotenv'
+...
 import { ApolloProvider } from 'react-apollo'
 import graphqlClient from '#root/api/graphqlClient'
 ...
+dotenv.config()
 ```
-now aroutn the `<ThemeProvider>` we will wrap it with the new `ApolloProvider` that will allow us to use the Apollo GraphQL abilities:
+the `dotenv.config()` should be the right after the last import, as we would like to import the environemtn variable as soon as the application starts.
+now around the `<ThemeProvider>` we will wrap it with the new `ApolloProvider` that will allow us to use the Apollo GraphQL abilities:
 ```javascript
 render(
   <ApolloProvider client={graphqlClient}>
@@ -1850,3 +1854,155 @@ import gql from 'graphql-tag'
       }
     }
   ```
+
+  ### Step 19
+  Now that we have the ability to create a user session, we need to add the functunality to the `Login.js` page.
+  - add the following just above the `Login` function:
+  ```javascript
+    const mutaion = gql`
+      mutation($email: String!, $password: String!) {
+        createUserSession(email: $email, password: $password) {
+          id
+          user {
+            email
+            id
+          }
+        }
+      }
+    `
+  ```
+  now insite the `Login` function component add:
+  ```javascript
+  export default function Login () {
+    const [createUserSession] = useMutation(mutation)
+    ...
+  ```
+  change the `onSubmit` function to:
+  ```javascript
+    const onSubmit = handleSubmit(async ({ email, password }) => {
+      const result = await createUserSession({variables: { email, password}})
+      console.log(result)
+    })
+  ```
+  this will bind the `createUserSession` functunality that we have created in the `users-service`, `api-gateway` to the `classfied-service`.
+  - in `classified-service\src\index.js` file add the following at the top:
+  ```javascript
+    import dotev from 'dotenv'
+    import '@babel/polyfill'
+  ```  
+  - in the `classified-app` browser page, enter email and password in the text input fields, click the *Login* button and check the results in the `console`:
+  ```sh
+  {data: {…}}
+    data:
+      createUserSession:
+      id: "f58986b4-a6ff-4a80-92d0-918c48deb21d"
+      user:
+        email: "test1@example.com"
+        id: "f6491505-f7c2-41d3-bbc2-fbf604057084"
+      __typename: "User"
+      __proto__: Object
+      __typename: "UserSession"
+      __proto__: Object
+      __proto__: Object
+      __proto__: Object
+```
+- in order to continue with the login process we need to be able to retreive the user session info. Let's add that capability to the `users-service`:
+  - in the `users-service/src/serer/routes.js` file add:
+  ```javascript
+    app.get('/sessions/:sessionId', async (req, res, next) => {
+      try {
+        const userSession = await UserSession.findByPk(req.params.sessionId)
+
+        if (!userSession) {
+          return next(new Error('Invalid session ID'))
+        }
+        return res.json(userSession)
+      } catch (e) {
+        return next(e)
+      }
+    })
+  ```
+- now we add this to the `api-gatway`
+- First we need to allow the `graphQL` *playground* to accept cookies, as by defaut it does not. In the playground settings (click on the gears icon on the top right side of the page), change the `"request.credentials": "omit",` to `"request.credentials": "include",`.
+- In order to do that we first add a new custome middleware. Create a new file `api-gatway\src\server\injectSession.js` and add:
+```javascript
+  import UserSession from '#root/adapters/UsersService'
+
+  const injectSession = async (req, res, next) => {
+    if (req.cookies.userSessionId) {
+      const userSession = await UserSession.fetchUserSession({
+        sessionId: req.cookies.userSessionId
+      })
+      res.locals.userSession = userSession
+    }
+    return next()
+  }
+
+  export default injectSession
+```
+now let's add this to the `startServer.js`:
+```javascript
+...
+import formatGraphQLError from './formatGraphQLError'
+import injectSession from './injectSession'
+..
+app.use(injectSession)
+
+apolloServer.applyMiddleware({ app, cors: false, path: '/graphql' })
+...
+```
+- now we add the `fetchUserSession` in the `\adapters\UserService.js`:
+```javascript
+  static async fetchUserSession ({ sessionId}) {
+    const body = await got.get(`${USERS_SERVICE_URI}/sessions/${sessionId}`).json()
+    return body
+  }
+```
+- next we add the `userSession` to the `graphQL` *schema* as we defined it in the `\graphql\typeDefs.js` file:
+```sh
+  type Query {
+      listings: [Listing!]!
+      userSession(me: Boolean!): UserSession
+  }
+```
+this will allow to check if the user is logged in, by checking the if a session exists for it at the db. If the user is not logged, a null response will be returned from the server.
+- now add the new `userSession` to the resolvers. create a new file `\graphql\resolvers\Query\userSession.js` and add:
+```javascript
+  const userSessionResolver = async (obj, args, context) => {
+    if (!args.me) throw new Error('unsupported argument value')
+    return context.res.locals.userSession
+  }
+  export default userSessionResolver
+```
+and in the '\graphql\resolvers\Query\index.js` add
+```javascript
+  export { default as userSession } from './userSession'
+```
+- so now if we will use the `graphQL ` *playground* (after we changed the settings to "include" the credentials, see above), we can create a new session using the `createUserSession(email:"test4@example.com", password:"test")` mutation, and then retreive the sessionID informaton using `userSession` as follows:
+```graphQL
+  {
+    userSession(me: true){
+      id
+      user{
+        id
+        email
+      }
+    }
+  }
+```
+and the result will be:
+```JSON
+  {
+    "data": {
+      "userSession": {
+        "id": "fa0555db-ac3a-4b08-a824-5f03196c4709",
+        "user": {
+          "id": "18de4050-dc98-41d6-9196-9f7293bdb6df",
+          "email": "test4@example.com"
+        }
+      }
+    }
+  }
+ ``` 
+ - this allows us to use the session informaton in the login/logout/register flow.
+ 

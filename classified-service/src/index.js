@@ -1,3 +1,6 @@
+import dotenv from 'dotenv'
+
+import '@babel/polyfill'
 import React from 'react'
 import { render } from 'react-dom'
 
@@ -9,6 +12,8 @@ import * as theme from './theme'
 import { ApolloProvider } from 'react-apollo'
 import graphqlClient from '#root/api/graphqlClient'
 
+dotenv.config()
+// console.log(process.env.SERVICES_URI)
 const GlobalStyle = createGlobalStyle`
   @import url('https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap');
 
