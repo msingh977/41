@@ -4,6 +4,9 @@ import styled from 'styled-components'
 
 import TextInput from '#root/components/shared/TextInput'
 
+import { useMutation } from '@apollo/react-hooks'
+import gql from 'graphql-tag'
+
 const Label = styled.label`
   display: block;
 
@@ -67,7 +70,9 @@ export default function Login () {
             ref={register}
           />
         </Label>
-        <LoginButton type='submit'>Login</LoginButton>
+        <LoginButton disabled={isSubmitting} type='submit'>
+          Login
+        </LoginButton>
       </form>
     </div>
   )

@@ -25,11 +25,11 @@ const setupRoutes = app => {
     }
   })
 
-  app.get('/user/:id', async (req, res, next) => {
+  app.get('/users/:id', async (req, res, next) => {
     try {
-      const oneUser = await User.findOne({
-        id: req.param.id
-      })
+      const oneUser = await User.findByPk(req.params.id)
+
+      if (!oneUser) return next(new Error('Invalid User ID'))
       return res.json(oneUser)
     } catch (e) {
       return next(e)
@@ -44,9 +44,6 @@ const setupRoutes = app => {
       const oneUser = await User.findOne({
         password: req.param.id
       })
-      // console.log(oneUser.passwordHash)
-      // console.log(hashPassword(req.body.password))
-      // console.log(comparePassword(req.body.password, oneUser.passwordHash))
       return res.json(comparePassword(req.body.password, oneUser.passwordHash))
     } catch (e) {
       return next(e)

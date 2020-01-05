@@ -16,6 +16,7 @@ const typeDefs = gql`
 
   type UserSession {
     id: ID!
+    userId: ID!
     user: User!
     expiresAt: Date!
     createdAt: Date!

@@ -6,6 +6,9 @@ import { createGlobalStyle, ThemeProvider } from 'styled-components'
 
 import * as theme from './theme'
 
+import { ApolloProvider } from 'react-apollo'
+import graphqlClient from '#root/api/graphqlClient'
+
 const GlobalStyle = createGlobalStyle`
   @import url('https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap');
 
@@ -24,9 +27,11 @@ const GlobalStyle = createGlobalStyle`
  `
 
 render(
-  <ThemeProvider theme={theme}>
-    <GlobalStyle />
-    <Root />
-  </ThemeProvider>,
+  <ApolloProvider client={graphqlClient}>
+    <ThemeProvider theme={theme}>
+      <GlobalStyle />
+      <Root />
+    </ThemeProvider>
+  </ApolloProvider>,
   document.getElementById('app')
 )

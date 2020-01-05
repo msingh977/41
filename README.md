@@ -1725,3 +1725,128 @@ import TextInput from '#root/components/shared/TextInput'
 ```
 - after the service will refreshed, enter data in the two fields rendred on the screen, click on the 'Login' button, and then check the 'console' and the enetered data should appear there.
 
+### Step 18
+Now instead of sending the entered login data to the `console`, we actually need to send it to the api and use it to create a session.
+- in a `terminal` window pointing to the `classified-service`, run the following:
+```sh
+yarn add apollo-cache-inmemory apollo-client apollo-link-http  graphql graphql-tag react-apollo @apollo/react-hooks
+```
+- create a new file `classified-service\src\api\graphqlClient.js`, this setup the connection to the graphQL api-gateway that we have setup earlier:
+```javascript 
+import { ApolloClient } from 'apollo-client'
+import { HttpLink } from 'apollo-link-http'
+import { InMemoryCache } from 'apollo-cache-inmemory'
+
+export const cache = new InMemoryCache()
+
+const client = new ApolloClient({
+  cache,
+  link: new HttpLink({
+    credentials: "include",
+    uri: process.env.SERVICES_URI + '/graphql'
+  })
+})
+
+export default client;
+```
+- we need to add a new `.env` file that will hold the `classified-service` environemnt variables. in the `classified-service\` root folder:
+```sh
+SERVICES_URI=http://localhost:7000
+```
+- now we add the graphQL ability to the `index.js` file:
+```javascript
+...
+import { ApolloProvider } from 'react-apollo'
+import graphqlClient from '#root/api/graphqlClient'
+...
+```
+now aroutn the `<ThemeProvider>` we will wrap it with the new `ApolloProvider` that will allow us to use the Apollo GraphQL abilities:
+```javascript
+render(
+  <ApolloProvider client={graphqlClient}>
+    <ThemeProvider theme={theme}>
+      <GlobalStyle />
+      <Root />
+    </ThemeProvider>
+  </ApolloProvider>,
+  document.getElementById('app')
+)
+```
+- stop the `classified-service` using CTRL+C in the `terminal` window, and then start it again using `yarn watch`, to take in all the `.env` and new modules.
+- refresh the `classified` application page to make sure that all is working well.
+- in order to "login" the app, we need to include the *Mutation Login(sessions)* in the `Login` component.
+- in the `Login.js` file, add the following:
+```javascript
+import { useMutation } from '@apollo/react-hooks'
+import gql from 'graphql-tag'
+...
+```
+- once the user log in, we will need to retreive the user infomration from the db, by querying it. We are missing the connection between the `UserSession` and the `User` models within the graphQL resolvers. Let's add that ability by:
+  - create a new file `api-gateway\src\graphql\resolvers\UserSession.js`, and add the following:
+  ```javascript
+    import UsersService from '#root/adapters/usersService'
+      const UserSession = {
+        user: async userSession => {
+          return await UsersService.fetchUser({ userId: userSession.userId })
+        }
+      }
+
+    export default UserSession
+  ```
+  We first define the *obj* `UserSession` and we using the *contextual value* of that *obj* to set it up and its value changes.
+  - We then need to import this query in to the `resolvers\index.js`:
+  ```javascript
+  ...
+    import UserSession from './UserSession'
+
+    const resolvers = { Mutation, Query, UserSession }
+  ```
+  - now, add the new `fetchUser` to the `usersService` as:
+  ```javascript
+    static async fetchUser ({ userId }) {
+      const body = await got.get(`${USERS_SERVICE_URI}/users/${userId}`).json()
+      return body
+    }
+  ```
+  - next, we need to add the route `users/:userid` in the `users-service`. In the `users-service\src\server\routes.js` add:
+  ```javascript
+  ...
+    app.get('/users/:id', async (req, res, next) => {
+      try {
+        const oneUser = await User.findByPk(req.params.id)
+
+        if (!oneUser) return next(new Error('Invalid User ID'))
+        return res.json(oneUser)
+      } catch (e) {
+        return next(e)
+      }
+    })
+  ...
+  ```
+  - wait that all services will restart, and that there are no error, open the `graphQL` playground and try to create another mutation `createUserSession` that will also retreive the `User` info, as follows:
+  ```graphQL
+    mutation{
+    createUserSession(email:"test2@example.com", password:"test"){
+        id
+        user{
+          id
+          email
+        }
+      }
+    }
+  ```
+  this will return the following as the result:
+  ```JSON
+    {
+      "data": {
+        "createUserSession": {
+          "id": "ed1e98c2-4a85-468f-a360-bffb90d92047",
+          "userId": "bf395a72-c79e-4996-9081-a7d45093f7b5",
+          "user": {
+            "id": "bf395a72-c79e-4996-9081-a7d45093f7b5",
+            "email": "test2@example.com"
+          }
+        }
+      }
+    }
+  ```
