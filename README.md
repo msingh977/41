@@ -2005,4 +2005,207 @@ and the result will be:
   }
  ``` 
  - this allows us to use the session informaton in the login/logout/register flow.
- 
+
+ ### Step 20
+ Now we can start using the session information in the `Login.js` flow.
+ - we start by creating a *Redux* store. create a new file 'classified-service\src\components\store\index.js`. Add the following
+ ```javascript
+    import { combinedReducers, createStore } from 'redux'
+
+    import * as ducks from './ducks'
+
+    const reducers = combinedReducers(ducks)
+
+    const store = createStore(
+      reducers,
+      window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+    )
+
+    export default store
+ ```
+the addition of `window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()` to the store initialization, is to make sure that the *Reduc Devtools* will work on the browser. This can be removed during production.
+- create a new file `store/ducks/session.js` and add the following:
+```javascript
+  // actions
+    const CLEAR = "session/CLEAR"
+    const SET = "session/SET"
+
+    const DEFAULT_STATE = null
+
+    //reducer
+    const sessionReducer = (state = DEFAULT_STATE, action={}) => {
+        switch (action.type) {
+            case SET:
+                return action.session
+            case CLEAR:
+                return null    
+        }
+        return state
+    }
+
+    export default sessionReducer
+
+    // action creators
+    export const setSession = session => {
+        return { session, type: SET}
+    }
+
+    export const clearSession = () => {
+        return { type: CLEAR}
+    }
+```
+- create a new file `ducks/index.js` and add the following:
+```javascript
+    export { default as session } from './session'
+```
+- add we continue to add the `Redux` to the `server`. in the `classified-service\src\index.js` file add:
+```javascript
+  ...
+  import { Provider } from 'react-redux'
+  ...
+  import store from '/store'
+  ...
+  <Provider store={store}>
+    <ApolloProvider client={graphqlClient}>
+    ...
+    </ApollowProvider>
+  <Provider>  
+```
+- saving all the changes and once the server re-starts, the state received the *INIT* state.
+- now we need to make the necessary to change the state.
+- in the `Root` component we will initialize the state, add the following:
+```javascript
+import React, { useEffect, useState } from 'react'
+import { useDispatch } from 'react-redux'
+import gql from 'graphql-tag'
+...
+import graphqlClient from '#root/api/graphqlClient'
+import { setSession } from '#root/store/ducks/session'
+...
+const query = gql`
+  {
+    userSession(me: true) {
+      id
+      user {
+        email
+        id
+      }
+    }
+  }
+`
+
+export default function Root () {
+  const [initialized, setInitialized] = useState(false)
+  const dispatch = useDispatch()
+
+  useEffect(()=>{
+    graphqlClient.query({query}).then(({data}) => {
+      if (data.userSession) {
+        dispatch(setSession(data.userSession))
+      }
+      setInitialized(true)
+    })
+  }, [])
+
+  if (!initialized) return 'Loading...'
+```
+- save all the changes, and check the state using the `redux devtools`, this should show the change in the state from *INIT* to `session/SET` and the content of the state: `session:null => {id:'fa0555db-ac3a-4b08-a824-5…rSession'}`, as there was already a cookie with a sessionID.</br>
+we will use the store dispatch set to show differnt information, so when the user logs in the user account infomration will be presented.
+- create a new componrnt `components\Root\AccountDetails\AccountDetails.js`, and add the following:
+```javascript  
+  import React from 'react'
+
+  export default function AccountDetails () {
+    return (
+      <div>
+        <h1>Account Details</h1>
+      </div>
+    )
+  }
+```
+add a new file `components\Root\AccountDetails\index.js` and add:
+```javascript
+  import AccountDetails from './AccountDetails'
+
+  export default AccountDetails
+```
+- now, instead of rendering `<Login />` component in the `Sidebar`, let's render `AccountDetails`, that in turn will render 'Login' conditiionally, based on the session login state.</br>
+change the `Root.js` to:
+```javascript
+  ...
+  // import Login from './Login'
+  import AccountDetails from './AccountDetails'
+  ...
+  <Sidebar>
+    <AccountDetails />
+  </Sidebar>
+```
+in the `AccountDetails` file:
+```javascript
+...
+import { useSelector } from 'react-redux'
+import Login from '#root/components/Root/Login'
+...
+return (
+  <div>
+    <Login />
+  </div>
+)
+```
+- on the page of the `classified-service`, as we have a cookie with the sessionId, the page will render the `AccountDetails` components.
+- Now, let's create the componet that will present the user account info. Create a new file `components\Root\AccountDetails\Account\Account.js` and add the following:
+```javascript
+  import React from 'react'
+  import { useSelector } from 'react-redux'
+  import styled from 'styled-components'
+
+  const Wrapper = styled.div`
+    color: ${props => props.theme.Mortar};
+    font-size: 0.9ren;
+  `
+
+  export default function Account () {
+    const session = useSelector(state => state.session)
+
+    return <Wrapper>Logged in as {session.user.email}</Wrapper>
+  }
+```
+and another file `components\Root\AccountDetails\Account\index.js` and add the following:
+```javascript
+import Account from './Account'
+
+export default Account
+```
+in the `AccountDetails` file, make the following changes:
+```javascript'
+  import Account from './Account'
+  ...
+  return <>{session ? <Account /> : <Login />}</>
+```
+once save, check the `classified-service` browser window, and the following will be renderd on the `Sidebar` section:
+```html
+Logged in as test4@example.com
+```
+- let's format the `Account` component by adding some styles and colors:
+```
+...
+  import styled from 'styled-components'
+
+  const Email = styled.div`
+    color: ${props => props.theme.DarkSlateGray};
+    font-size: 1.1rem;
+    top-margin: 0.25rem;
+  `
+
+  const Wrapper = styled.div`
+    color: ${props => props.theme.Mortar};
+    font-size: 0.9ren;
+  `
+  ...
+  return (
+    <Wrapper>
+      Logged in as <Email>{session.user.email}</Email>
+    </Wrapper>
+  )
+```
+- now we will add the ability to *Logout*  

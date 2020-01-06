@@ -1,7 +1,13 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
 
-import Login from './Login'
+import { useDispatch } from 'react-redux'
+import gql from 'graphql-tag'
+import graphqlClient from '#root/api/graphqlClient'
+import { setSession } from '#root/store/ducks/session'
+
+// import Login from './Login'
+import AccountDetails from './AccountDetails'
 
 const Wrapper = styled.div`
   box-sizing: border-box;
@@ -26,13 +32,39 @@ const Sidebar = styled.div`
   width: 10vw;
 `
 
+const query = gql`
+  {
+    userSession(me: true) {
+      id
+      user {
+        email
+        id
+      }
+    }
+  }
+`
+
 export default function Root () {
+  const [initialized, setInitialized] = useState(false)
+  const dispatch = useDispatch()
+
+  useEffect(() => {
+    graphqlClient.query({ query }).then(({ data }) => {
+      if (data.userSession) {
+        dispatch(setSession(data.userSession))
+      }
+      setInitialized(true)
+    })
+  }, [])
+
+  if (!initialized) return 'Loading...'
+
   return (
     <Wrapper>
       <Container>
         <Content>Content</Content>
         <Sidebar>
-          <Login />
+          <AccountDetails />
         </Sidebar>
       </Container>
     </Wrapper>
