@@ -2209,3 +2209,53 @@ Logged in as test4@example.com
   )
 ```
 - now we will add the ability to *Logout*  
+
+### Step 21
+We are left with setting a 'logout' and 'registration', as well as presenting the 'classification' list that we have in the db.
+- first we add a route to *delete a session*. This will be done in the `users-service`. add the following to the `route.js`:
+```javascript
+  app.delete('/sessions/:sessionId', async (req, res, next) => {
+    try {
+      const userSession = await UserSession.findByPk(req.params.sessionId)
+      if (!userSession) {
+        return next(new Error('Invalid session ID'))
+      }
+      await userSession.destroy()
+
+      return res.end()
+    } catch (e) {
+      return next(e)
+    }
+  })
+```
+- now we add the acompaning code in the `api-gateway`. in the `typeDefs.js` add a new *Mutation*:
+```sh
+  deleteUserSession(sessionId: ID!): Boolean!
+```  
+- add a new file `deleteUserSession.js` in the `resolvers/Mutation` folder:
+```javascript
+  import UsersService from '#root/adapters/UsersService'
+
+  const deleteUserSessionResolver = async (obj, { sessionId }, context) => {
+    await UsersService.deleteUserSession({ sessionId })
+    context.res.clear.cookie('userSessionId')
+
+    return ture
+  }
+
+  export default deleteUserSessionResolver
+```
+and in the `resolvers\Mutation\index.js` file add:
+```javascript
+  export { default as deleteUserSession } from './deleteUserSession'
+```
+- in the `UserService.js` add the `deleteUserSession` method:
+```javascript
+  static async deleteUserSession ({ sessionId }) {
+    const body = await got
+      .delete(`${USERS_SERVICE_URI}/sessions/${sessionId}`)
+      .json()
+    return body
+  }
+```
+- now we can try this in the `graphql` *playgound*:
