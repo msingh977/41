@@ -1,5 +1,18 @@
-version: "3"
+version: "3.7"
+
 services:
+  "app":
+    build: ./app/
+    volumes:
+      - "./app:/usr/src/app"
+      - "/usr/src/app/node_modules"
+    ports:
+      - "7001:3000"
+    environment:
+      - NODE_ENV=development
+      - REACT_APP_AUTHOR=wiezmankimchi
+      - REACT_APP_VER=1.02
+
   api-gateway:
     build: "./api-gateway"
     depends_on:
@@ -8,42 +21,74 @@ services:
     ports:
       - 7000:7000
     volumes:
-     - ./api-gateway:/opt/app
+      - ./api-gateway:/usr/src/app
+      - "/usr/src/app/node_modules"
 
   listing-service:
     build: "./listing-service"
     depends_on:
-     - listing-service-db
-    environment: 
+      - listing-service-db
+    environment:
       - DB_URI=mysql://root:password@listing-service-db/db?charset=UTF8
     ports:
-      - 7100:7100   
+      - 7100:7100
     volumes:
-     - ./listing-service:/opt/app
+      - ./listing-service:/usr/src/app
+      - "/usr/src/app/node_modules"
 
   listing-service-db:
+    volumes:
+      - ./listing-db:/var/lib/mysql
     environment:
-     - MYSQL_ROOT_PASSWORD=password
-     - MYSQL_DATABASE=db
-    image: mysql:5.7.20 
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=db
+    image: mysql:5.7.20
     ports:
-      - 0.0.0.0:7200:3306   
+      - 0.0.0.0:7200:3306
 
   users-service:
     build: "./users-service"
     depends_on:
-     - users-service-db
-    environment: 
+      - users-service-db
+    command:
+      # [
+      #   './wait-for-it.sh',
+      #   'users-service-db:7201',
+      #   '--',
+      #   'npm',
+      #   'run',
+      #   'db:migrate',
+      # ]
+      ["./migration.sh"]
+    environment:
       - DB_URI=mysql://root:password@users-service-db/db?charset=UTF8
     ports:
-      - 7101:7101   
+      - 7101:7101
     volumes:
-     - ./users-service:/opt/app
+      - ./users-service:/usr/src/app
+      - "/usr/src/app/node_modules"
 
   users-service-db:
+    volumes:
+      - ./users-db:/var/lib/mysql
     environment:
-     - MYSQL_ROOT_PASSWORD=password
-     - MYSQL_DATABASE=db
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=db
     image: mysql:5.7.20
     ports:
-      - 0.0.0.0:7201:3306    
+      - 0.0.0.0:7201:3306
+  # migration:
+  #   image: 33c_users-service:latest
+  #   command:
+  #     [
+  #       './wait-for-it/wait-for-it.sh',
+  #       'users-service-db:7201',
+  #       '--',
+  #       'npx',
+  #       'sequelize-cli',
+  #       'db:migrate',
+  #     ]
+  #   links:
+  #     - users-service-db
+  #   depends_on:
+  #     - users-service-db

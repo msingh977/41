@@ -1,9 +1,20 @@
-FROM node:12
+# base image
+FROM node:latest
 
-COPY . /opt/app
+RUN mkdir /usr/src/app
+WORKDIR /usr/src/app
 
-WORKDIR /opt/app
+# add `/app/node_modules/.bin` to $PATH
+ENV PATH usr/src/app/node_modules/.bin:$PATH
 
-RUN yarn
+# install and cache app dependencies
+ADD package.json /usr/src/app/package.json
+RUN npm install
 
-CMD yarn watch
+# RUN npm run db:migrate
+
+# add app
+# ADD . /usr/src/app
+
+# start app
+CMD ["npm", "run", "watch"]
