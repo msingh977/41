@@ -1,24 +1,26 @@
-import React, { useState } from 'react';
-import { Grommet, Box, grommet, Anchor } from 'grommet';
-import { Add } from 'grommet-icons';
+import dotenv from 'dotenv'
+import 'core-js/stable'
+import 'regenerator-runtime/runtime'
+import React from 'react'
+import { Provider } from 'react-redux'
 
-function App() {
-  const [show, setShow] = useState(false);
-  const customTheme = {
-    global: {
-      colors: {
-        custom: '#cc6633'
-      }
-    }
-  };
+import { ApolloProvider } from 'react-apollo'
+import graphqlClient from 'api/graphqlClient'
+import store from './store'
+
+// import Login from 'components/Root/AccountDetails/Login'
+import Layout from 'components/Layout'
+
+dotenv.config({ path: './' })
+
+function App () {
   return (
-    <Grommet theme={customTheme}>
-      <Anchor icon={<Add />} label='Add' color='custom' />
-      <Box>Author: {process.env.REACT_APP_AUTHOR}</Box>
-      <Box>Version: {process.env.REACT_APP_VER}</Box>
-      <Box>Another box</Box>
-    </Grommet>
-  );
+    <Provider store={store}>
+      <ApolloProvider client={graphqlClient}>
+        <Layout />
+      </ApolloProvider>
+    </Provider>
+  )
 }
 
-export default App;
+export default App

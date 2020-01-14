@@ -7,12 +7,12 @@ services:
       - "./app:/usr/src/app"
       - "/usr/src/app/node_modules"
     ports:
-      - "7001:3000"
+        - "7001:3000"
     environment:
-      - NODE_ENV=development
-      - REACT_APP_AUTHOR=wiezmankimchi
-      - REACT_APP_VER=1.02
-
+          - NODE_ENV=development
+          - REACT_APP_AUTHOR=wiezmankimchi
+          - REACT_APP_VER=1.02
+       
   api-gateway:
     build: "./api-gateway"
     depends_on:
@@ -28,6 +28,8 @@ services:
     build: "./listing-service"
     depends_on:
       - listing-service-db
+    command:
+      ["./migration.sh"]  
     environment:
       - DB_URI=mysql://root:password@listing-service-db/db?charset=UTF8
     ports:
@@ -51,14 +53,6 @@ services:
     depends_on:
       - users-service-db
     command:
-      # [
-      #   './wait-for-it.sh',
-      #   'users-service-db:7201',
-      #   '--',
-      #   'npm',
-      #   'run',
-      #   'db:migrate',
-      # ]
       ["./migration.sh"]
     environment:
       - DB_URI=mysql://root:password@users-service-db/db?charset=UTF8

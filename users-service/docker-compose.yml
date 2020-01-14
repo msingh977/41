@@ -1,0 +1,45 @@
+version: "3.7"
+
+services:
+  
+
+  users-service:
+    build: "."
+    depends_on:
+      - users-service-db
+    entrypoint: "/usr/src/app/migration.sh"
+    # command:
+    #   ["./migration.sh"]
+    environment:
+      - DB_URI=mysql://root:password@users-service-db/db?charset=UTF8
+    ports:
+      - 7101:7101
+    volumes:
+      - .:/usr/src/app
+      - "/usr/src/app/node_modules"
+
+  users-service-db:
+    volumes:
+      - ../users-db:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=db
+    image: mysql:5.7.20
+    ports:
+      - 0.0.0.0:7201:3306
+
+  # migration:
+  #   image: 41_users-service:latest
+  #   command:
+  #     [
+  #       './wait-for-it.sh',
+  #       'users-service-db:7201',
+  #       '--',
+  #       'npx',
+  #       'sequelize-cli',
+  #       'db:migrate',
+  #     ]
+  #   links:
+  #     - users-service-db
+  #   depends_on:
+  #     - users-service-db

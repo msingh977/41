@@ -2259,3 +2259,5 @@ and in the `resolvers\Mutation\index.js` file add:
   }
 ```
 - now we can try this in the `graphql` *playgound*:
+
+*TODO - find a way to have the db persistant.

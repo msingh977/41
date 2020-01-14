@@ -17,4 +17,6 @@ RUN npm install
 # ADD . /usr/src/app
 
 # start app
+ADD migration.sh /usr/src/app/migration.sh
+RUN ["chmod", "+x", "/usr/src/app/migration.sh"]
 CMD ["npm", "run", "watch"]

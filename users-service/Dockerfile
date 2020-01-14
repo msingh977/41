@@ -26,4 +26,6 @@ RUN npm install
 # RUN /usr/src/app/wait-for-it.sh users-service-db:7201 -- npm run db:migrate
 
 # start app
+ADD migration.sh /usr/src/app/migration.sh
+RUN ["chmod", "+x", "/usr/src/app/migration.sh"]
 CMD ["npm", "run", "watch"]
