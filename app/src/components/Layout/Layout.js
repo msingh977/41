@@ -1,5 +1,6 @@
 import React from 'react'
 import { Grommet, Grid, Box } from 'grommet'
+import Login from 'components/Login'
 
 function Layout () {
   return (
@@ -17,7 +18,9 @@ function Layout () {
       >
         <Box gridArea='header' background='dark-2' />
         <Box gridArea='nav' background='dark-3' />
-        <Box gridArea='main' background='dark-4' />
+        <Box gridArea='main' background='#efeeee'>
+          <Login />
+        </Box>
       </Grid>
     </Grommet>
   )
