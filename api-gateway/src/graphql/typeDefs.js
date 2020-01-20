@@ -31,6 +31,7 @@ const typeDefs = gql`
   type Query {
     listings: [Listing!]!
     userSession(me: Boolean!): UserSession
+    users: [User]
   }
 `
 export default typeDefs

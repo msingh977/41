@@ -22,10 +22,11 @@ RUN npm install
 # ADD . /usr/src/app
 
 # entrypoint for running migrations
-# ADD wait-for-it.sh /usr/src/app/wait-for-it.sh
-# RUN /usr/src/app/wait-for-it.sh users-service-db:7201 -- npm run db:migrate
+# RUN ["chmod", "+x", "/usr/src/app/wait-for-it.sh"]
 
 # start app
+ADD wait-for-it.sh /usr/src/app/wait-for-it.sh
 ADD migration.sh /usr/src/app/migration.sh
-RUN ["chmod", "+x", "/usr/src/app/migration.sh"]
+RUN ["chmod", "+x", "migration.sh"]
+RUN ["chmod", "+x", "wait-for-it.sh"]
 CMD ["npm", "run", "watch"]

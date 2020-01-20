@@ -8,7 +8,29 @@ import theme, {
   NeoPasswordField
 } from 'components/Layout/theme'
 
+import { useMutation } from '@apollo/react-hooks'
+import gql from 'graphql-tag'
+
+const mutation = gql`
+  mutation($email: String!, $password: String!) {
+    createUserSession(email: $email, password: $password) {
+      id
+      user {
+        email
+        id
+      }
+    }
+  }
+`
+
 function Login (props) {
+  const [createUserSession] = useMutation(mutation)
+
+  const onSubmit = handleSubmit(async ({ email, password }) => {
+    const data = await createUserSession({ variables: { email, password } })
+    console.log(data)
+  })
+
   return (
     <Grommet theme={theme}>
       <Box align='center' pad={{ vertical: 'xlarge' }}>

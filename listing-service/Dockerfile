@@ -17,6 +17,8 @@ RUN npm install
 # ADD . /usr/src/app
 
 # start app
+ADD wait-for-it.sh /usr/src/app/wait-for-it.sh
 ADD migration.sh /usr/src/app/migration.sh
-RUN ["chmod", "+x", "/usr/src/app/migration.sh"]
+RUN ["chmod", "+x", "migration.sh"]
+RUN ["chmod", "+x", "wait-for-it.sh"]
 CMD ["npm", "run", "watch"]

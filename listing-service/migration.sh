@@ -1,3 +1,4 @@
 #!/bin/sh
-npm run db:migrate
+/usr/src/app/wait-for-it.sh listing-service-db:7200 -- npm run db:migrate
+# npm run db:migrate
 npm run watch

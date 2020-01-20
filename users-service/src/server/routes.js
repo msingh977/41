@@ -14,10 +14,11 @@ const setupRoutes = app => {
     }
 
     try {
+      const hashedpassword = hashPassword(req.body.password)
       const newUser = await User.create({
         email: req.body.email,
         id: generateUUID(),
-        passwordHash: hashPassword(req.body.password)
+        passwordHash: hashedpassword
       })
       return res.json(newUser)
     } catch (e) {
@@ -54,14 +55,19 @@ const setupRoutes = app => {
     if ((!req.body.password, !req.body.password)) {
       return next(new Error('Invalid body'))
     }
+
+    console.log(`routes[58]-{${req.body.email}, ${req.body.password}}`)
+
     try {
       const oneUser = await User.findOne({
         attributes: {},
         where: { email: req.body.email }
       })
+
       if (!oneUser) {
         return next(new Error('Invalid Credentials'))
       }
+
       if (!comparePassword(req.body.password, oneUser.passwordHash)) {
         return next(new Error('Invalid Credentials'))
       }
