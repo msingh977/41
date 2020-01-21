@@ -26,10 +26,10 @@ const mutation = gql`
 function Login (props) {
   const [createUserSession] = useMutation(mutation)
 
-  const onSubmit = handleSubmit(async ({ email, password }) => {
+  const onSubmit = async ({ email, password }) => {
     const data = await createUserSession({ variables: { email, password } })
     console.log(data)
-  })
+  }
 
   return (
     <Grommet theme={theme}>
@@ -48,7 +48,7 @@ function Login (props) {
           <Form
             basis='medium'
             focusFurstChild={false}
-            onSubmit={f => alert(JSON.stringify(f))}
+            onSubmit={f => onSubmit(f)}
             {...props}
           >
             <NeoEmailField
@@ -73,7 +73,7 @@ function Login (props) {
               name='password'
               validation={[
                 validators.required(),
-                validators.minLength(5),
+                validators.minLength(4),
                 validators.alphaNumeric()
               ]}
             />
