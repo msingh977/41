@@ -1,6 +1,6 @@
-import { rgba } from "polished";
-import { base } from "grommet/themes";
-import { deepMerge } from "grommet/utils";
+import { rgba } from 'polished'
+import { base } from 'grommet/themes'
+import { deepMerge } from 'grommet/utils'
 
 import {
   themeRamp,
@@ -12,33 +12,36 @@ import {
   focusColor,
   statusColors,
   designColors
-} from "./colors";
+} from './colors'
+
+import { Gainsboro } from './allColors'
 
 const colors = {
+  gainsboro: Gainsboro,
   active: rgba(221, 221, 221, 0.5),
-  black: "design-black",
-  white: "desgin-white",
+  black: 'design-black',
+  white: 'desgin-white',
   border: {
     dark: rgba(255, 255, 255, 0.33),
     light: rgba(0, 0, 0, 0.33)
   },
   brand: brandColor,
   control: {
-    dark: "accent-1",
-    light: "brand"
+    dark: 'accent-1',
+    light: 'brand'
   },
   focus: focusColor,
-  placeholder: "design-silver",
-  selected: "brand",
+  placeholder: 'design-silver',
+  selected: 'brand',
   text: {
-    dark: "design-smoke",
-    light: "design-nightRider"
+    dark: 'design-smoke',
+    light: 'design-nightRider'
   },
   icon: {
-    dark: "design-smoke",
-    light: "design-nightRider"
+    dark: 'design-smoke',
+    light: 'design-nightRider'
   }
-};
+}
 
 /**
  * @description map the color ramps to grommet color theme props.
@@ -46,15 +49,15 @@ const colors = {
  * @param {*} prefix prefix to be added before each ramp key
  */
 const mapRampToTheme = (ramp, prefix) =>
-  Object.keys(ramp).forEach(key => (colors[`${prefix}-${key}`] = ramp[key]));
+  Object.keys(ramp).forEach(key => (colors[`${prefix}-${key}`] = ramp[key]))
 
-mapRampToTheme(themeRamp, "theme");
-mapRampToTheme(dangerRamp, "danger");
-mapRampToTheme(warningRamp, "warning");
-mapRampToTheme(successRamp, "success");
-mapRampToTheme(grayRamp, "gray");
-mapRampToTheme(statusColors, "status");
-mapRampToTheme(designColors, "design");
+mapRampToTheme(themeRamp, 'theme')
+mapRampToTheme(dangerRamp, 'danger')
+mapRampToTheme(warningRamp, 'warning')
+mapRampToTheme(successRamp, 'success')
+mapRampToTheme(grayRamp, 'gray')
+mapRampToTheme(statusColors, 'status')
+mapRampToTheme(designColors, 'design')
 
 // merge grommet `base` theme with our custom styles
 const theme = deepMerge(base, {
@@ -62,26 +65,29 @@ const theme = deepMerge(base, {
     colors,
     focus: {
       border: {
-        color: "success"
+        color: 'success'
       }
     }
   },
-  button:{
-    extend:{
-      "2019":{textAlign:"center",
-      boxShadow: "rgb(255, 255, 255) -8px -8px 20px 0px, rgb(146, 146, 146) 1px 1px 14px -3px",
-      background: "rgb(239, 238, 238)",
-      border: "1px solid rgba(255, 255, 255, 0.1)",
-      borderRadius: "6px"}
+  button: {
+    extend: {
+      '2019': {
+        textAlign: 'center',
+        boxShadow:
+          'rgb(255, 255, 255) -8px -8px 20px 0px, rgb(146, 146, 146) 1px 1px 14px -3px',
+        background: 'rgb(239, 238, 238)',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        borderRadius: '6px'
+      }
     }
   },
   anchor: {
-    extend:{
-      paddingLeft:"3px",
-      paddingRight:"3px"
+    extend: {
+      paddingLeft: '3px',
+      paddingRight: '3px'
     },
-    hover:{
-      textDecoration : "none",
+    hover: {
+      textDecoration: 'none',
       extend: {
         // border: "1px solid rgba(255, 255, 255, 0.1)",
         // borderRadius: "6px",
@@ -89,11 +95,9 @@ const theme = deepMerge(base, {
       }
     },
     color: {
-      dark: "theme-20"
+      dark: 'theme-20'
     }
   }
-});
+})
 
-export default theme;
-
-
+export default theme

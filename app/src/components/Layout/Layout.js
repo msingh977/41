@@ -1,12 +1,14 @@
 import React from 'react'
 import { Grommet, Grid, Box, Text, Nav, Anchor } from 'grommet'
 import { Switch, Route, Link } from 'react-router-dom'
+import { Home, Notification, ChatOption } from 'grommet-icons'
 
-import Login from 'components/Login'
+import theme from './theme'
+import { Login, Notifications } from 'components/Pages'
 
 function Layout () {
   return (
-    <Grommet>
+    <Grommet theme={theme}>
       <Grid
         rows={['10vh', '90vh']}
         columns={['20vw', '80vw']}
@@ -18,16 +20,32 @@ function Layout () {
           { name: 'main', start: [1, 1], end: [1, 1] }
         ]}
       >
-        <Box gridArea='header' background='dark-2' />
-        <Box gridArea='nav' background='dark-3'>
-          <Nav direction='row' background='brand' pad='medium'>
-            <Anchor icon={<Icons.Home />} hoverIndicator />
-            <Anchor icon={<Icons.Notification />} hoverIndicator />
-            <Anchor icon={<Icons.ChatOption />} hoverIndicator />
+        <Box gridArea='header'>
+          <Nav
+            direction='row'
+            // background='#efeeee'
+            background='gainsboro'
+            pad='medium'
+            margin='medium'
+          >
+            <Link to='/'>
+              <Anchor icon={<Home />} hoverIndicator />
+            </Link>
+            <Link to='/notifications'>
+              <Anchor icon={<Notification />} hoverIndicator />
+            </Link>
           </Nav>
         </Box>
+        <Box gridArea='nav' background='dark-3'></Box>
         <Box gridArea='main' background='#efeeee'>
-          <Login />
+          <Switch>
+            <Route exact path='/'>
+              <Login />
+            </Route>
+            <Route exact path='/notifications'>
+              <Notifications />
+            </Route>
+          </Switch>
         </Box>
       </Grid>
     </Grommet>
