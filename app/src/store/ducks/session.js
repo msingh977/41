@@ -26,3 +26,5 @@ export const setSession = session => {
 export const clearSession = () => {
   return { type: CLEAR }
 }
+
+// TODO

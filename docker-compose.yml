@@ -1,4 +1,4 @@
--version: "3.7"
+version: "3.5"
 
 services:
   "app":
@@ -30,7 +30,12 @@ services:
       - listing-service-db
     command: ["./migration.sh"]
     environment:
-      - DB_URI=mysql://root:password@listing-service-db/db?charset=UTF8
+      # - DB_URI=mysql://root:password@listing-service-db/db?charset=UTF8
+      # postgresql://[user[:password]@][netloc][:port][/dbname][?param1=value1&...]
+      - DB_URI=postgresql://root:password@listing-service-db/listing
+      - PG_DATABASE=listing
+      - PG_USERNAME= root
+      - PG_PASSWORD= password
     ports:
       - 7100:7100
     volumes:
@@ -39,13 +44,25 @@ services:
 
   listing-service-db:
     volumes:
-      - ./listing-db:/var/lib/mysql
+      - ./listing-db:/var/lib/postgresql/data
     environment:
-      - MYSQL_ROOT_PASSWORD=password
-      - MYSQL_DATABASE=db
-    image: mysql:5.7.20
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: root
+      POSTGRES_DB: listing
+    image: postgres
     ports:
-      - 0.0.0.0:7200:3306
+      - 0.0.0.0:7200:5432
+  #
+  #
+  # listing-service-db:
+  #   volumes:
+  #     - ./listing-db:/var/lib/mysql
+  #   environment:
+  #     - MYSQL_ROOT_PASSWORD=password
+  #     - MYSQL_DATABASE=db
+  #   image: mysql:5.7.20
+  #   ports:
+  #     - 0.0.0.0:7200:3306
 
   users-service:
     build: "./users-service"
@@ -53,7 +70,12 @@ services:
       - users-service-db
     command: ["./migration.sh"]
     environment:
-      - DB_URI=mysql://root:password@users-service-db/db?charset=UTF8
+      # - DB_URI=mysql://root:password@users-service-db/db?charset=UTF8
+      # postgresql://[user[:password]@][netloc][:port][/dbname][?param1=value1&...]
+      - DB_URI=postgresql://root:password@users-service-db/users
+      - PG_DATABASE=users
+      - PG_USERNAME=root
+      - PG_PASSWORD=password
     ports:
       - 7101:7101
     volumes:
@@ -62,13 +84,25 @@ services:
 
   users-service-db:
     volumes:
-      - ./users-db:/var/lib/mysql
+      - ./users-db:/var/lib/postgresql/data
     environment:
-      - MYSQL_ROOT_PASSWORD=password
-      - MYSQL_DATABASE=db
-    image: mysql:5.7.20
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: root
+      POSTGRES_DB: users
+    image: postgres
     ports:
-      - 0.0.0.0:7201:3306
+      - 0.0.0.0:7201:5432
+  #
+  #
+  # users-service-db:
+  #   volumes:
+  #     - ./users-db:/var/lib/mysql
+  #   environment:
+  #     - MYSQL_ROOT_PASSWORD=password
+  #     - MYSQL_DATABASE=db
+  #   image: mysql:5.7.20
+  #   ports:
+  #     - 0.0.0.0:7201:3306
   # migration:
   #   image: 33c_users-service:latest
   #   command:

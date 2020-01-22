@@ -2058,7 +2058,7 @@ the addition of `window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_
 ```javascript
     export { default as session } from './session'
 ```
-- add we continue to add the `Redux` to the `server`. in the `classified-service\src\index.js` file add:
+- and we continue to add the `Redux` to the `server`. in the `classified-service\src\index.js` file add:
 ```javascript
   ...
   import { Provider } from 'react-redux'
@@ -2071,6 +2071,7 @@ the addition of `window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_
     </ApollowProvider>
   <Provider>  
 ```
+This will allow to to use the Redux store throughout the app.
 - saving all the changes and once the server re-starts, the state received the *INIT* state.
 - now we need to make the necessary to change the state.
 - in the `Root` component we will initialize the state, add the following:
@@ -2260,4 +2261,3 @@ and in the `resolvers\Mutation\index.js` file add:
 ```
 - now we can try this in the `graphql` *playgound*:
 
-*TODO - find a way to have the db persistant.

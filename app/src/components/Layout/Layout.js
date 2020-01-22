@@ -1,5 +1,7 @@
 import React from 'react'
-import { Grommet, Grid, Box } from 'grommet'
+import { Grommet, Grid, Box, Text, Nav, Anchor } from 'grommet'
+import { Switch, Route, Link } from 'react-router-dom'
+
 import Login from 'components/Login'
 
 function Layout () {
@@ -17,7 +19,13 @@ function Layout () {
         ]}
       >
         <Box gridArea='header' background='dark-2' />
-        <Box gridArea='nav' background='dark-3' />
+        <Box gridArea='nav' background='dark-3'>
+          <Nav direction='row' background='brand' pad='medium'>
+            <Anchor icon={<Icons.Home />} hoverIndicator />
+            <Anchor icon={<Icons.Notification />} hoverIndicator />
+            <Anchor icon={<Icons.ChatOption />} hoverIndicator />
+          </Nav>
+        </Box>
         <Box gridArea='main' background='#efeeee'>
           <Login />
         </Box>
