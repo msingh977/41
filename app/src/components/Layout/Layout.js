@@ -1,17 +1,17 @@
 import React from 'react'
 import { Grommet, Grid, Box, Text, Nav, Anchor } from 'grommet'
 import { Switch, Route, Link } from 'react-router-dom'
-import { Home, Notification, ChatOption } from 'grommet-icons'
+import { Home, Notification, Configure } from 'grommet-icons'
 
 import theme from './theme'
-import { Login, Notifications } from 'components/Pages'
+import { Login, Notifications, Settings } from 'components/Pages'
 
-function Layout () {
+function Layout() {
   return (
     <Grommet theme={theme}>
       <Grid
-        rows={['10vh', '90vh']}
-        columns={['20vw', '80vw']}
+        rows={['10vh', '87vh']}
+        columns={['10vw', '90vw']}
         gap='xsmall'
         fill='vertical'
         areas={[
@@ -23,10 +23,9 @@ function Layout () {
         <Box gridArea='header'>
           <Nav
             direction='row'
-            // background='#efeeee'
             background='gainsboro'
-            pad='medium'
-            margin='medium'
+            pad='small'
+            margin='xsmall'
           >
             <Link to='/'>
               <Anchor icon={<Home />} hoverIndicator />
@@ -34,9 +33,26 @@ function Layout () {
             <Link to='/notifications'>
               <Anchor icon={<Notification />} hoverIndicator />
             </Link>
+            <Link to='/settings'>
+              <Anchor icon={<Configure />} hoverIndicator />
+            </Link>
           </Nav>
         </Box>
-        <Box gridArea='nav' background='dark-3'></Box>
+        <Box gridArea='nav' background='dark-3'>
+          <Nav
+            direction='column'
+            background='gainsboro'
+            pad='small'
+            margin='xsmall'
+          >
+            <Link to='/' style={{ textDecoration: 'none' }}>
+              <Anchor icon={<Home />} label="Home" />
+            </Link>
+            <Link to='/notifications'>
+              <Anchor icon={<Notification />} hoverIndicator />
+            </Link>
+          </Nav>
+        </Box>
         <Box gridArea='main' background='#efeeee'>
           <Switch>
             <Route exact path='/'>
@@ -44,6 +60,9 @@ function Layout () {
             </Route>
             <Route exact path='/notifications'>
               <Notifications />
+            </Route>
+            <Route exact path='/settings'>
+              <Settings />
             </Route>
           </Switch>
         </Box>
