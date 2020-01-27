@@ -1,7 +1,7 @@
-import ListingsService from '#root/adapters/UsersService'
+import UsersService from '#root/adapters/UsersService'
 
 const usersResolver = async () => {
-  return await ListingsService.fetchUsers()
+  return await UsersService.fetchUsers()
 }
 
 export default usersResolver

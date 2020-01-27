@@ -1,8 +1,8 @@
 import { combineReducers, createStore } from 'redux'
 
-import * as ducks from './ducks'
+import * as allReducers from './reducers'
 
-const reducers = combineReducers(ducks)
+const reducers = combineReducers(allReducers)
 
 const store = createStore(
   reducers,

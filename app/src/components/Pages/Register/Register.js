@@ -1,6 +1,7 @@
 import React from 'react'
-import { Grommet, Anchor, Box, Text } from 'grommet'
-import { Form, CheckBoxField, validators } from 'grommet-controls'
+import { Grommet, Box } from 'grommet'
+import { Form, validators } from 'grommet-controls'
+import _ from 'lodash'
 
 import theme, {
   NeoButton,
@@ -10,13 +11,12 @@ import theme, {
 
 import { useMutation } from '@apollo/react-hooks'
 import gql from 'graphql-tag'
-import { useDispatch } from 'react-redux'
-import { setSession } from 'store/reducers/session'
 import { useHistory } from 'react-router-dom'
+import { onError } from 'apollo-link-error'
 
 const mutation = gql`
   mutation($email: String!, $password: String!) {
-    createUserSession(email: $email, password: $password) {
+    createUser(email: $email, password: $password) {
       id
       user {
         email
@@ -26,22 +26,33 @@ const mutation = gql`
   }
 `
 
-function Login (props) {
-  const [createUserSession] = useMutation(mutation)
-  const dispatch = useDispatch()
+function Register (props) {
+  const [createUser] = useMutation(mutation, { errorPolicy: 'all' })
+  // const {loading, error, data } = useMutation(mutation, { errorPolicy: 'all' })
   const history = useHistory()
-
-  // const { loading, error, data } = useMutation(mutation, {
-  //   errorPolicy: 'all'
-  // })
 
   const onSubmit = async ({ email, password }) => {
     try {
-      const data = await createUserSession({ variables: { email, password } })
-      dispatch(setSession(data.data.createUserSession))
-      history.replace({ pathname: '/notifications' })
+      const data = await createUser(
+        { variables: { email, password } },
+        { errorPolicy: 'all' }
+      )
+
+      // const link = onError(({ graphQLErrors, networkError }) => {
+      //   if (graphQLErrors)
+      //     graphQLErrors.map(({ message, locations, path }) =>
+      //       console.log(
+      //         `[GraphQL Error]: message: ${message}, Location: ${locations}, Path: ${path}`
+      //       )
+      //     )
+      //   if (networkError) console.log(`[Netwrok Error]: ${networkError}`)
+      // })
+      // history.replace({ pathname: '/login' })
     } catch (e) {
-      console.log(`error, ${e}`)
+      const err = _.get(e, 'originalError.response.body')
+      console.log(`[53]: ${err}`)
+      console.log(`[54]: ${e.errors}`)
+
       return null
     }
   }
@@ -72,17 +83,6 @@ function Login (props) {
               validation={[validators.required(), validators.email()]}
             />
             <NeoPasswordField
-              label={
-                <Box>
-                  <Box align='end'>
-                    <Anchor
-                      href='/reset_password'
-                      size='small'
-                      label='Forgot password?'
-                    />
-                  </Box>
-                </Box>
-              }
               placeholder='password'
               description='Password'
               name='password'
@@ -92,23 +92,16 @@ function Login (props) {
                 validators.alphaNumeric()
               ]}
             />
-            <Box pad={{ vertical: 'xxsmall' }}>
-              <CheckBoxField
-                label='Remember me'
-                name='rememberme'
-                inField={false}
-              />
-              <NeoButton type='submit' label='Login' />
-            </Box>
-            <Box direction='row' alignSelf='center' gap='small' align='center'>
-              <Text margin={{ top: 'small' }}>
-                {"Don't have an account yet?"}
-              </Text>
-              <Anchor
-                href='/register'
-                label='Sign up'
-                margin={{ top: 'small' }}
-              />
+            <NeoPasswordField
+              placeholder='confirm password'
+              description='Confirm Password'
+              name='confirm_password'
+              validation={[
+                validators.equalsField('password', 'the above password')
+              ]}
+            />
+            <Box pad='medium' gap='medium'>
+              <NeoButton type='submit' label='Register' />
             </Box>
           </Form>
         </Box>
@@ -117,4 +110,4 @@ function Login (props) {
   )
 }
 
-export default Login
+export default Register

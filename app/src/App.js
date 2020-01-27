@@ -9,12 +9,11 @@ import { ApolloProvider } from 'react-apollo'
 import graphqlClient from 'api/graphqlClient'
 import store from './store'
 
-// import Login from 'components/Root/AccountDetails/Login'
 import Layout from 'components/Layout'
 
 dotenv.config({ path: './' })
 
-function App() {
+function App () {
   return (
     <Router>
       <Provider store={store}>

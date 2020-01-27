@@ -32,7 +32,7 @@ services:
     environment:
       # - DB_URI=mysql://root:password@listing-service-db/db?charset=UTF8
       # postgresql://[user[:password]@][netloc][:port][/dbname][?param1=value1&...]
-      - DB_URI=postgresql://root:password@listing-service-db/listing
+      - DB_URI=postgresql://root:password@listing-service-db:5432/listing
       - PG_DATABASE=listing
       - PG_USERNAME= root
       - PG_PASSWORD= password
@@ -72,7 +72,7 @@ services:
     environment:
       # - DB_URI=mysql://root:password@users-service-db/db?charset=UTF8
       # postgresql://[user[:password]@][netloc][:port][/dbname][?param1=value1&...]
-      - DB_URI=postgresql://root:password@users-service-db/users
+      - DB_URI=postgresql://root:password@users-service-db:5432/users
       - PG_DATABASE=users
       - PG_USERNAME=root
       - PG_PASSWORD=password
@@ -91,7 +91,7 @@ services:
       POSTGRES_DB: users
     image: postgres
     ports:
-      - 0.0.0.0:7201:5432
+      - 7201:5432
   #
   #
   # users-service-db:

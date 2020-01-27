@@ -8,7 +8,7 @@ const DEFAULT_STATE = null
 const sessionReducer = (state = DEFAULT_STATE, action = {}) => {
   switch (action.type) {
     case SET:
-      return action.session
+      return { ...state, sessionid: action.payload.id, isLoggedin: true }
     case CLEAR:
       return null
     default:
@@ -20,11 +20,9 @@ export default sessionReducer
 
 // action creators
 export const setSession = session => {
-  return { session, type: SET }
+  return { payload: session, type: SET }
 }
 
 export const clearSession = () => {
   return { type: CLEAR }
 }
-
-// TODO

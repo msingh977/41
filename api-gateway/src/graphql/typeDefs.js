@@ -14,6 +14,11 @@ const typeDefs = gql`
     email: String!
   }
 
+  type Error {
+    path: String!
+    message: String!
+  }
+
   type UserSession {
     id: ID!
     userId: ID!
@@ -22,8 +27,14 @@ const typeDefs = gql`
     createdAt: Date!
   }
 
+  type newUserResponse {
+    ok: Boolean!
+    errors: [Error!]
+    user: User
+  }
+
   type Mutation {
-    createUser(email: String!, password: String!): User!
+    createUser(email: String!, password: String!): User
     createUserSession(email: String!, password: String!): UserSession!
     deleteUserSession(sessionId: ID!): Boolean!
   }
@@ -32,6 +43,7 @@ const typeDefs = gql`
     listings: [Listing!]!
     userSession(me: Boolean!): UserSession
     users: [User]
+    allSessions: UserSession
   }
 `
 export default typeDefs

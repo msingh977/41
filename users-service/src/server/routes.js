@@ -123,6 +123,14 @@ const setupRoutes = app => {
       return next(e)
     }
   })
+  app.get('/allsessions', async (req, res, next) => {
+    try {
+      const allSessions = await UserSession.findAll()
+      return res.json(allSessions)
+    } catch (e) {
+      return next(e)
+    }
+  })
 }
 
 export default setupRoutes

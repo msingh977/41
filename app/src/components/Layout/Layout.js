@@ -1,12 +1,41 @@
 import React from 'react'
-import { Grommet, Grid, Box, Text, Nav, Anchor } from 'grommet'
-import { Switch, Route, Link } from 'react-router-dom'
-import { Home, Notification, Configure } from 'grommet-icons'
+import { Grommet, Grid, Box, Nav } from 'grommet'
+import { Switch, Route, Link, Redirect } from 'react-router-dom'
+import {
+  Home as HomeIcon,
+  Notification,
+  Configure,
+  Logout as LogoutIcon
+} from 'grommet-icons'
 
 import theme from './theme'
-import { Login, Notifications, Settings } from 'components/Pages'
+import {
+  ForgotPassword,
+  Home,
+  Login,
+  Logout,
+  NetworkError,
+  Notifications,
+  Register,
+  Settings
+} from 'components/Pages'
 
-function Layout() {
+import { useSelector } from 'react-redux'
+
+function Layout () {
+  const session = useSelector(state => state.session)
+
+  function PrivateRoute ({ children, ...rest }) {
+    return (
+      <Route
+        {...rest}
+        render={({ location }) =>
+          session ? children : <Redirect to={{ pathname: '/login' }} />
+        }
+      />
+    )
+  }
+
   return (
     <Grommet theme={theme}>
       <Grid
@@ -28,13 +57,13 @@ function Layout() {
             margin='xsmall'
           >
             <Link to='/'>
-              <Anchor icon={<Home />} hoverIndicator />
+              <HomeIcon />
             </Link>
             <Link to='/notifications'>
-              <Anchor icon={<Notification />} hoverIndicator />
+              <Notification />
             </Link>
             <Link to='/settings'>
-              <Anchor icon={<Configure />} hoverIndicator />
+              <Configure />
             </Link>
           </Nav>
         </Box>
@@ -46,24 +75,44 @@ function Layout() {
             margin='xsmall'
           >
             <Link to='/' style={{ textDecoration: 'none' }}>
-              <Anchor icon={<Home />} label="Home" />
+              <HomeIcon />
             </Link>
             <Link to='/notifications'>
-              <Anchor icon={<Notification />} hoverIndicator />
+              <Notification />
             </Link>
+            {session && (
+              <Link to='/logout'>
+                <LogoutIcon />
+              </Link>
+            )}
           </Nav>
         </Box>
         <Box gridArea='main' background='#efeeee'>
           <Switch>
-            <Route exact path='/'>
+            <PrivateRoute exact path='/'>
+              <Home />
+            </PrivateRoute>
+            <Route exact path='/login'>
               <Login />
             </Route>
-            <Route exact path='/notifications'>
+            <Route exact path='/network-error'>
+              <NetworkError />
+            </Route>
+            <Route exact path='/reset_password'>
+              <ForgotPassword />
+            </Route>
+            <Route exact path='/register'>
+              <Register />
+            </Route>
+            <PrivateRoute exact path='/logout'>
+              <Logout />
+            </PrivateRoute>
+            <PrivateRoute exact path='/notifications'>
               <Notifications />
-            </Route>
-            <Route exact path='/settings'>
+            </PrivateRoute>
+            <PrivateRoute exact path='/settings'>
               <Settings />
-            </Route>
+            </PrivateRoute>
           </Switch>
         </Box>
       </Grid>

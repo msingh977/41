@@ -4,7 +4,7 @@ import styled from 'styled-components'
 import { useDispatch } from 'react-redux'
 import gql from 'graphql-tag'
 import graphqlClient from 'api/graphqlClient'
-import { setSession } from 'store/ducks/session'
+import { setSession } from 'store/reducers/session'
 
 // import Login from './Login'
 import AccountDetails from './AccountDetails'
